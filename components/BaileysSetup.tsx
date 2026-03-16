@@ -79,6 +79,21 @@ export const BaileysSetup: React.FC<BaileysSetupProps> = ({ onUpdateStoreSetting
     }, 2000);
   };
 
+  const [testNumber, setTestNumber] = useState('');
+  const [isSendingTest, setIsSendingTest] = useState(false);
+
+  const sendTestMessage = () => {
+    if (!testNumber) return alert("Enter a test phone number");
+    setIsSendingTest(true);
+    addLog(`Dispatching test payload to ${testNumber}...`);
+    
+    setTimeout(() => {
+      setIsSendingTest(false);
+      addLog(`SUCCESS: Test message delivered to ${testNumber}.`);
+      alert("Test message sent successfully (Simulated)");
+    }, 2000);
+  };
+
   const simulateSuccess = () => {
     setStatus('connected');
     localStorage.setItem('easyPOS_whatsappSession', 'active');
@@ -297,6 +312,26 @@ export const BaileysSetup: React.FC<BaileysSetupProps> = ({ onUpdateStoreSetting
                 <button onClick={() => onUpdateStoreSettings({ ...settings as StoreSettings, whatsappTemplate: template })} className="w-full py-6 bg-slate-900 dark:bg-brand-600 text-white rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3 italic">
                     <Save size={20}/> Sync Stable Payload
                 </button>
+
+                <div className="pt-10 border-t border-slate-100 dark:border-slate-800 space-y-6">
+                    <h4 className="text-xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">Transmission Test</h4>
+                    <div className="flex gap-4">
+                        <input 
+                          type="tel" 
+                          placeholder="Test Phone Number" 
+                          value={testNumber}
+                          onChange={e => setTestNumber(e.target.value)}
+                          className="flex-1 px-6 py-4 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl outline-none focus:border-[#00a884] font-bold dark:text-white"
+                        />
+                        <button 
+                          onClick={sendTestMessage}
+                          disabled={isSendingTest}
+                          className="px-8 py-4 bg-[#00a884] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#008f70] transition-all disabled:opacity-50"
+                        >
+                          {isSendingTest ? <Loader2 size={18} className="animate-spin" /> : 'Send Test'}
+                        </button>
+                    </div>
+                </div>
               </div>
 
               {/* Live Preview */}

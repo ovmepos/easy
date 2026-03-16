@@ -47,7 +47,9 @@ export const translations: Record<Language, Translations> = {
     'notes': 'Notes',
     'noBookings': 'No bookings found',
     'searchCategories': 'Search categories...',
-    'products': 'Products'
+    'products': 'Products',
+    'addCategory': 'Add Category',
+    'whatsappSetup': 'WhatsApp Setup'
   },
   ar: {
     'back': 'رجوع',
@@ -94,7 +96,9 @@ export const translations: Record<Language, Translations> = {
     'notes': 'ملاحظات',
     'noBookings': 'لا توجد حجوزات',
     'searchCategories': 'بحث في الفئات...',
-    'products': 'منتجات'
+    'products': 'منتجات',
+    'addCategory': 'إضافة فئة',
+    'whatsappSetup': 'إعداد واتساب'
   },
   // Added missing Hindi (hi) translations to fix TypeScript missing property error
   hi: {
@@ -142,6 +146,8 @@ export const translations: Record<Language, Translations> = {
     'notes': 'नोट्स',
     'noBookings': 'कोई बुकिंग नहीं मिली',
     'searchCategories': 'श्रेणियाँ खोजें...',
-    'products': 'उत्पाद'
+    'products': 'उत्पाद',
+    'addCategory': 'श्रेणी जोड़ें',
+    'whatsappSetup': 'व्हाट्सएप सेटअप'
   }
 };

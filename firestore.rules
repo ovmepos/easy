@@ -81,6 +81,10 @@ service cloud.firestore {
              data.timestamp is number;
     }
 
+    function isValidCategory(data) {
+      return data.name is string && data.name.size() > 0;
+    }
+
     match /profiles/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isValidProfile(request.resource.data) && (isOwner(userId) || isAdmin());
@@ -117,6 +121,12 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isValidStockHistory(request.resource.data);
       allow update, delete: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }

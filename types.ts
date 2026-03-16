@@ -1,4 +1,12 @@
 
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+}
+
 export enum AppView {
   LOGIN = 'LOGIN',
   POS = 'POS',
@@ -16,7 +24,7 @@ export enum AppView {
   VENDOR_REQUESTS = 'VENDOR_REQUESTS'
 }
 
-export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CASHIER' | 'CUSTOMER' | 'VENDOR' | 'VENDOR_STAFF';
+export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CASHIER' | 'CUSTOMER' | 'VENDOR' | 'VENDOR_STAFF' | 'VISITOR';
 export type Language = 'en' | 'ar' | 'hi';
 
 export interface Translations {

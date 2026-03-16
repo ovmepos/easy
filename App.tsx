@@ -15,7 +15,7 @@ import { CustomerPortal } from './components/CustomerPortal';
 import { Bookings } from './components/Bookings';
 import { VendorPanel } from './components/VendorPanel';
 import { Categories } from './components/Categories';
-import { AppView, Product, Sale, User, StoreSettings, Language, CartItem, Booking } from './types';
+import { AppView, Product, Sale, User, StoreSettings, Language, CartItem, Booking, Category } from './types';
 import { translations } from './translations';
 import { Loader2, Menu, Globe, ChevronLeft, LogOut } from 'lucide-react';
 import { db, auth } from './firebase';
@@ -32,6 +32,7 @@ const App: React.FC = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('easyPOS_theme') === 'dark');
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('easyPOS_language') as Language) || 'en');
@@ -42,7 +43,8 @@ const App: React.FC = () => {
     setUser(loggedInUser);
     if (loggedInUser.role === 'ADMIN') setCurrentView(AppView.POS);
     else if (loggedInUser.role === 'VENDOR') setCurrentView(AppView.VENDOR_PANEL);
-    else setCurrentView(AppView.CUSTOMER_PORTAL);
+    else if (loggedInUser.role === 'VISITOR' || loggedInUser.role === 'CUSTOMER') setCurrentView(AppView.CUSTOMER_PORTAL);
+    else setCurrentView(AppView.POS);
   };
 
   // Firebase Sync
@@ -71,6 +73,11 @@ const App: React.FC = () => {
     const unsubscribeBookings = onSnapshot(query(collection(db, 'bookings'), orderBy('date', 'desc')), (snapshot) => {
       const b = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
       setBookings(b);
+    });
+
+    const unsubscribeCategories = onSnapshot(collection(db, 'categories'), (snapshot) => {
+      const cats = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Category));
+      setCategories(cats);
     });
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -107,6 +114,7 @@ const App: React.FC = () => {
       unsubscribeProfiles();
       unsubscribeSettings();
       unsubscribeBookings();
+      unsubscribeCategories();
       unsubscribeAuth();
     };
   }, []);
@@ -133,6 +141,31 @@ const App: React.FC = () => {
       await deleteDoc(doc(db, 'products', id));
     } catch (error) {
       console.error("Error deleting product:", error);
+    }
+  };
+
+  const handleAddCategory = async (category: Omit<Category, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'categories'), category);
+    } catch (error) {
+      console.error("Error adding category:", error);
+    }
+  };
+
+  const handleUpdateCategory = async (category: Category) => {
+    try {
+      const { id, ...data } = category;
+      await updateDoc(doc(db, 'categories', id), data as any);
+    } catch (error) {
+      console.error("Error updating category:", error);
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'categories', id));
+    } catch (error) {
+      console.error("Error deleting category:", error);
     }
   };
 
@@ -213,7 +246,11 @@ const App: React.FC = () => {
   };
 
   const toggleLanguage = () => {
-    const newLang: Language = language === 'en' ? 'ar' : 'en';
+    let newLang: Language;
+    if (language === 'en') newLang = 'ar';
+    else if (language === 'ar') newLang = 'hi';
+    else newLang = 'en';
+    
     setLanguage(newLang);
     localStorage.setItem('easyPOS_language', newLang);
   };
@@ -301,13 +338,13 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-[100svh] overflow-hidden bg-[#111827] font-sans flex-col lg:flex-row transition-colors">
-      {!user?.role.includes('CUSTOMER') && (
+      {!(user?.role === 'CUSTOMER' || user?.role === 'VISITOR') && (
         <div className={`fixed inset-y-0 z-[100] w-72 transform transition-all duration-500 lg:static lg:w-72 lg:translate-x-0 ${isSidebarVisible ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'}`}>
             <Sidebar currentView={currentView} onChangeView={navigateTo} onLogout={handleLogout} currentUser={user!} isOnline={true} isSyncing={isSyncing} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} language={language} toggleLanguage={toggleLanguage} t={t} onClose={() => setIsSidebarVisible(false)} />
         </div>
       )}
-      <main className={`flex-1 overflow-hidden relative flex flex-col bg-[#f8fafc] dark:bg-slate-950 transition-all duration-500 ${!user?.role.includes('CUSTOMER') && isSidebarVisible ? 'ltr:lg:rounded-l-[44px] rtl:lg:rounded-r-[44px] shadow-2xl' : ''}`}>
-        {!user?.role.includes('CUSTOMER') && currentView !== AppView.LOGIN && (
+      <main className={`flex-1 overflow-hidden relative flex flex-col bg-[#f8fafc] dark:bg-slate-950 transition-all duration-500 ${!(user?.role === 'CUSTOMER' || user?.role === 'VISITOR') && isSidebarVisible ? 'ltr:lg:rounded-l-[44px] rtl:lg:rounded-r-[44px] shadow-2xl' : ''}`}>
+        {!(user?.role === 'CUSTOMER' || user?.role === 'VISITOR') && currentView !== AppView.LOGIN && (
             <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50 no-print">
                 <div className="flex items-center gap-4">
                     <button onClick={() => setIsSidebarVisible(!isSidebarVisible)} className="p-2 lg:hidden text-slate-500"><Menu size={24}/></button>
@@ -329,8 +366,19 @@ const App: React.FC = () => {
         <div className="flex-1 overflow-hidden relative">
             {currentView === AppView.CUSTOMER_PORTAL && <CustomerPortal products={products} language={language} t={t} currentUser={user} onLoginRequest={() => navigateTo(AppView.LOGIN)} onLogout={handleLogout} onUpdateAvatar={() => {}} storeSettings={storeSettings} />}
             {currentView === AppView.VENDOR_PANEL && <VendorPanel products={products} sales={sales} users={users} currentUser={user!} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onBulkUpdateProduct={() => {}} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} language={language} t={t} onGoBack={handleGoBack} />}
-            {currentView === AppView.POS && <POS products={products} sales={sales} onCheckout={handleCheckout} storeSettings={storeSettings} onViewOrderHistory={() => navigateTo(AppView.ORDERS)} onUpdateStoreSettings={handleUpdateStoreSettings} t={t} language={language} currentUser={user!} onGoBack={handleGoBack} />}
-            {currentView === AppView.INVENTORY && <Inventory products={products} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onBulkUpdateProduct={() => {}} onGoBack={handleGoBack} t={t} currentUser={user!} language={language} />}
+            {currentView === AppView.POS && <POS products={products} sales={sales} onCheckout={handleCheckout} storeSettings={storeSettings} onViewOrderHistory={() => navigateTo(AppView.ORDERS)} onUpdateStoreSettings={handleUpdateStoreSettings} t={t} language={language} currentUser={user!} onGoBack={handleGoBack} onLogout={handleLogout} />}
+            {currentView === AppView.INVENTORY && <Inventory 
+              products={products} 
+              categories={categories.map(c => c.name)}
+              onAddProduct={handleAddProduct} 
+              onUpdateProduct={handleUpdateProduct} 
+              onDeleteProduct={handleDeleteProduct} 
+              onBulkUpdateProduct={() => {}} 
+              onGoBack={handleGoBack} 
+              t={t} 
+              currentUser={user!} 
+              language={language} 
+            />}
             {currentView === AppView.REPORTS && <Reports sales={sales} products={products} users={users} onGoBack={handleGoBack} language={language} />}
             {currentView === AppView.ORDERS && <Orders sales={sales} onProcessReturn={() => {}} storeSettings={storeSettings} onGoBack={handleGoBack} language={language} />}
             {currentView === AppView.SETTINGS && <Settings users={users} vendorRequests={[]} products={products} sales={sales} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} onReviewRequest={() => {}} onLogout={handleLogout} currentUser={user!} storeSettings={storeSettings} onUpdateStoreSettings={() => {}} onGoBack={handleGoBack} language={language} toggleLanguage={toggleLanguage} t={t} />}
@@ -340,9 +388,20 @@ const App: React.FC = () => {
               if (product) handleUpdateProduct({ ...product, stock: newStock });
             }} onGoBack={handleGoBack} language={language} t={t} />}
             {currentView === AppView.PRINT_BARCODE && <PrintBarcode products={products} storeSettings={storeSettings} onGoBack={handleGoBack} language={language} t={t} />}
-            {currentView === AppView.CATEGORIES && <Categories products={products} onUpdateProduct={handleUpdateProduct} onGoBack={handleGoBack} language={language} t={t} />}
+            {currentView === AppView.BAILEYS_SETUP && <BaileysSetup onUpdateStoreSettings={handleUpdateStoreSettings} settings={storeSettings} onGoBack={handleGoBack} t={t} />}
+            {currentView === AppView.CATEGORIES && <Categories 
+              products={products} 
+              categories={categories}
+              onAddCategory={handleAddCategory}
+              onUpdateCategory={handleUpdateCategory}
+              onDeleteCategory={handleDeleteCategory}
+              onUpdateProduct={handleUpdateProduct} 
+              onGoBack={handleGoBack} 
+              language={language} 
+              t={t} 
+            />}
         </div>
-        {!user?.role.includes('CUSTOMER') && <ClawdBot products={products} sales={sales} storeSettings={storeSettings} currentUser={user!} language={language} t={t} />}
+        {!(user?.role === 'CUSTOMER' || user?.role === 'VISITOR') && <ClawdBot products={products} sales={sales} storeSettings={storeSettings} currentUser={user!} language={language} t={t} />}
       </main>
     </div>
   );

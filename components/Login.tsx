@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Language, StoreSettings } from '../types';
-import { Lock, User as UserIcon, Loader2, Key, Store, Globe, LayoutDashboard, Sun, Moon, Zap, ShieldCheck, ShoppingCart, CreditCard, Wallet, Tag, Package, Smartphone, Layers, Boxes, LayoutGrid, LogIn, AlertCircle, Fingerprint } from 'lucide-react';
+import { Lock, User as UserIcon, Loader2, Key, Store, Globe, LayoutDashboard, Sun, Moon, Zap, ShieldCheck, ShoppingCart, CreditCard, Wallet, Tag, Package, Smartphone, Layers, Boxes, LayoutGrid, LogIn, AlertCircle, Fingerprint, ChevronRight, ChevronLeft } from 'lucide-react';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 
@@ -35,7 +35,7 @@ interface LoginProps {
 export const Login: React.FC<LoginProps> = ({ 
   onLogin, users, t = (k) => k, isDarkMode, toggleTheme, language, toggleLanguage, activeVendorId
 }) => {
-  const [method, setMethod] = useState<LoginMethod>('CREDENTIALS');
+  const [method, setMethod] = useState<LoginMethod | null>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [vendorCodeInput, setVendorCodeInput] = useState(activeVendorId || '');
@@ -155,7 +155,7 @@ export const Login: React.FC<LoginProps> = ({
     }
   };
 
-  const applyDemoCredentials = (role: 'ADMIN' | 'VENDOR' | 'STAFF' | 'CUSTOMER') => {
+  const applyDemoCredentials = (role: 'ADMIN' | 'VENDOR' | 'STAFF' | 'CUSTOMER' | 'VISITOR') => {
     setLoading(true);
     setError('');
     
@@ -163,12 +163,12 @@ export const Login: React.FC<LoginProps> = ({
     setTimeout(() => {
       let demoUser: User;
       
-      if (role === 'CUSTOMER') {
+      if (role === 'CUSTOMER' || role === 'VISITOR') {
         demoUser = {
-          id: 'demo_customer',
-          name: 'Demo Customer',
-          username: 'customer',
-          role: 'CUSTOMER',
+          id: 'demo_visitor',
+          name: 'Demo Visitor',
+          username: 'visitor',
+          role: 'VISITOR',
           vendorId: 'VND-DEMO'
         };
       } else {
@@ -243,45 +243,95 @@ export const Login: React.FC<LoginProps> = ({
           </div>
 
           {/* ENTRY TERMINAL */}
-          <div className="w-full max-w-lg mb-12 bg-white/5 backdrop-blur-3xl rounded-[3rem] md:rounded-[4rem] border border-white/10 p-8 md:p-12 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] animate-fade-in-up">
-              <div className="flex bg-black/40 p-2 rounded-[2.5rem] mb-10 border border-white/5 shadow-inner">
-                  <button onClick={() => setMethod('CREDENTIALS')} className={`flex-1 py-4 rounded-[2rem] text-[10px] md:text-xs font-black uppercase tracking-widest transition-all ${method === 'CREDENTIALS' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-500 hover:text-white'}`}>Staff Access</button>
-                  <button onClick={() => setMethod('VISITOR_CODE')} className={`flex-1 py-4 rounded-[2rem] text-[10px] md:text-xs font-black uppercase tracking-widest transition-all ${method === 'VISITOR_CODE' ? 'bg-brand-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}>Shop Visitor</button>
-              </div>
+          <div className="w-full max-w-lg mb-12 bg-white/5 backdrop-blur-xl rounded-[3rem] md:rounded-[4rem] border border-white/10 p-8 md:p-12 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] animate-fade-in-up">
+              {!method ? (
+                  <div className="space-y-6">
+                      <div className="text-center mb-8">
+                          <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Welcome to easyPOS</h3>
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2">Select your access node</p>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4">
+                          <button 
+                            onClick={() => setMethod('CREDENTIALS')}
+                            className="group relative overflow-hidden p-8 bg-white/5 hover:bg-white/10 rounded-[2.5rem] border border-white/10 transition-all active:scale-95 flex items-center gap-6"
+                          >
+                              <div className="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:rotate-6 transition-transform">
+                                  <ShieldCheck size={32} />
+                              </div>
+                              <div className="text-left">
+                                  <p className="text-lg font-black text-white italic uppercase tracking-tighter">Staff Access</p>
+                                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Operator & Admin Terminal</p>
+                              </div>
+                              <ChevronRight className="ml-auto text-slate-600 group-hover:text-white transition-colors" />
+                          </button>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                  {method === 'CREDENTIALS' ? (
-                      <>
-                          <div className="relative group">
-                              <UserIcon className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-brand-500 transition-colors" size={24} />
-                              <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full pl-20 pr-8 py-6 bg-black/40 border border-white/10 rounded-[2rem] outline-none focus:border-brand-500 font-bold text-white transition-all shadow-inner text-base md:text-lg" placeholder="Operator ID" required />
+                          <button 
+                            onClick={() => setMethod('VISITOR_CODE')}
+                            className="group relative overflow-hidden p-8 bg-white/5 hover:bg-white/10 rounded-[2.5rem] border border-white/10 transition-all active:scale-95 flex items-center gap-6"
+                          >
+                              <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:rotate-6 transition-transform">
+                                  <Smartphone size={32} />
+                              </div>
+                              <div className="text-left">
+                                  <p className="text-lg font-black text-white italic uppercase tracking-tighter">Shop Visitor</p>
+                                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Virtual Showroom & AI Try-on</p>
+                              </div>
+                              <ChevronRight className="ml-auto text-slate-600 group-hover:text-white transition-colors" />
+                          </button>
+                      </div>
+                  </div>
+              ) : (
+                  <>
+                      <div className="flex items-center justify-between mb-10">
+                          <button 
+                            onClick={() => setMethod(null)}
+                            className="flex items-center gap-2 text-slate-500 hover:text-white transition-colors group"
+                          >
+                              <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                              <span className="text-[10px] font-black uppercase tracking-widest">Back</span>
+                          </button>
+                          <div className="text-right">
+                              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Accessing</p>
+                              <p className="text-xs font-black text-white uppercase italic">{method === 'CREDENTIALS' ? 'Staff Node' : 'Visitor Portal'}</p>
                           </div>
-                          <div className="relative group">
-                              <Lock className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-brand-500 transition-colors" size={24} />
-                              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full pl-20 pr-8 py-6 bg-black/40 border border-white/10 rounded-[2rem] outline-none focus:border-brand-500 font-bold text-white transition-all shadow-inner text-base md:text-lg" placeholder="••••••••" required />
-                          </div>
-                      </>
-                  ) : (
-                      <>
-                          <div className="relative group">
-                              <Store className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-500" size={24} />
-                              <input type="text" value={vendorCodeInput} onChange={e => setVendorCodeInput(e.target.value)} className="w-full pl-20 pr-8 py-6 bg-black/40 border border-white/10 rounded-[2rem] outline-none focus:border-brand-500 font-black uppercase text-white tracking-widest shadow-inner text-base md:text-lg" placeholder="VND-XXXXX" required />
-                          </div>
-                          <div className="relative group">
-                              <Key className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-500" size={24} />
-                              <input type="password" value={visitorCode} onChange={e => setVisitorCode(e.target.value)} className="w-full pl-8 pr-8 py-6 bg-black/40 border border-white/10 rounded-[2rem] outline-none focus:border-brand-500 font-black text-center text-4xl md:text-5xl text-white tracking-[0.5em] shadow-inner" placeholder="••••" required maxLength={4} />
-                          </div>
-                      </>
-                  )}
-                  
-                  <button type="submit" disabled={loading} className="w-full py-6 md:py-7 bg-slate-900 hover:bg-black text-white rounded-[3rem] font-black uppercase tracking-[0.2em] text-xs md:text-sm shadow-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-4 group border border-white/5 mt-6">
-                      {loading ? <Loader2 className="animate-spin" size={24} /> : <><ShieldCheck size={26} className="group-hover:scale-110 transition-transform"/> {method === 'CREDENTIALS' ? 'Login Node' : 'Enter Shop'}</>}
-                  </button>
-              </form>
+                      </div>
 
-              {error && <div className="mt-8 text-center text-xs font-black text-rose-500 uppercase tracking-widest animate-shake p-4 bg-rose-500/10 rounded-2xl border border-rose-500/20 flex items-center justify-center gap-2"><AlertCircle size={16}/> {error}</div>}
-              
-              <div className="mt-12 pt-10 border-t border-white/5">
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                          {method === 'CREDENTIALS' ? (
+                              <>
+                                  <div className="relative group">
+                                      <UserIcon className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-brand-500 transition-colors" size={24} />
+                                      <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full pl-20 pr-8 py-6 bg-black/40 border border-white/10 rounded-[2rem] outline-none focus:border-brand-500 font-bold text-white transition-all shadow-inner text-base md:text-lg" placeholder="Operator ID" required />
+                                  </div>
+                                  <div className="relative group">
+                                      <Lock className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-brand-500 transition-colors" size={24} />
+                                      <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full pl-20 pr-8 py-6 bg-black/40 border border-white/10 rounded-[2rem] outline-none focus:border-brand-500 font-bold text-white transition-all shadow-inner text-base md:text-lg" placeholder="••••••••" required />
+                                  </div>
+                              </>
+                          ) : (
+                              <>
+                                  <div className="relative group">
+                                      <Store className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-500" size={24} />
+                                      <input type="text" value={vendorCodeInput} onChange={e => setVendorCodeInput(e.target.value)} className="w-full pl-20 pr-8 py-6 bg-black/40 border border-white/10 rounded-[2rem] outline-none focus:border-brand-500 font-black uppercase text-white tracking-widest shadow-inner text-base md:text-lg" placeholder="VND-XXXXX" required />
+                                  </div>
+                                  <div className="relative group">
+                                      <Key className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-500" size={24} />
+                                      <input type="password" value={visitorCode} onChange={e => setVisitorCode(e.target.value)} className="w-full pl-8 pr-8 py-6 bg-black/40 border border-white/10 rounded-[2rem] outline-none focus:border-brand-500 font-black text-center text-4xl md:text-5xl text-white tracking-[0.5em] shadow-inner" placeholder="••••" required maxLength={4} />
+                                  </div>
+                              </>
+                          )}
+                          
+                          <button type="submit" disabled={loading} className="w-full py-6 md:py-7 bg-slate-900 hover:bg-black text-white rounded-[3rem] font-black uppercase tracking-[0.2em] text-xs md:text-sm shadow-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-4 group border border-white/5 mt-6">
+                              {loading ? <Loader2 className="animate-spin" size={24} /> : <><ShieldCheck size={26} className="group-hover:scale-110 transition-transform"/> {method === 'CREDENTIALS' ? 'Login Node' : 'Enter Shop'}</>}
+                          </button>
+                      </form>
+                  </>
+              )}
+          </div>
+
+          {error && <div className="mt-8 text-center text-xs font-black text-rose-500 uppercase tracking-widest animate-shake p-4 bg-rose-500/10 rounded-2xl border border-rose-500/20 flex items-center justify-center gap-2"><AlertCircle size={16}/> {error}</div>}
+          
+          <div className="mt-12 pt-10 border-t border-white/5 w-full">
                   <div className="flex items-center justify-between gap-4 mb-8">
                       <button onClick={toggleLanguage} className="p-5 bg-white/5 hover:bg-white/10 rounded-3xl text-emerald-400 transition-all active:scale-90 shadow-xl border border-white/5"><Globe size={26}/></button>
                       <button onClick={handleGoogleLogin} className="flex-1 py-5 bg-white text-slate-900 rounded-3xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-4 shadow-2xl active:scale-95 transition-all hover:bg-slate-100">
@@ -306,7 +356,7 @@ export const Login: React.FC<LoginProps> = ({
                           <button onClick={() => applyDemoCredentials('STAFF')} className="py-3 px-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all text-left">
                               <span className="block text-purple-500 mb-0.5">03</span> Staff
                           </button>
-                          <button onClick={() => applyDemoCredentials('CUSTOMER')} className="py-3 px-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all text-left">
+                          <button onClick={() => applyDemoCredentials('VISITOR')} className="py-3 px-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all text-left">
                               <span className="block text-emerald-500 mb-0.5">04</span> Visitor
                           </button>
                       </div>
@@ -319,7 +369,6 @@ export const Login: React.FC<LoginProps> = ({
               <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.7em] text-white italic tracking-widest">ZAHRAT AL SAWSEN CORE v6.5</p>
               <div className="h-1 w-16 bg-brand-500 rounded-full"></div>
           </div>
-      </div>
 
       <style>{`
         @keyframes fade-in-up {

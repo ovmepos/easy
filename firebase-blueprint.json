@@ -97,6 +97,19 @@
         "userId": { "type": "string" }
       },
       "required": ["productId", "oldStock", "newStock", "timestamp"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "A product category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "icon": { "type": "string" },
+        "color": { "type": "string" }
+      },
+      "required": ["name"]
     }
   },
   "firestore": {
@@ -119,6 +132,10 @@
     "/stock_history/{historyId}": {
       "schema": "StockHistory",
       "description": "Stock adjustment history"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Product categories"
     }
   }
 }
