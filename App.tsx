@@ -14,7 +14,8 @@ import { ClawdBot } from './components/ClawdBot';
 import { CustomerPortal } from './components/CustomerPortal';
 import { Bookings } from './components/Bookings';
 import { VendorPanel } from './components/VendorPanel';
-import { AppView, Product, Sale, User, StoreSettings, Language, CartItem } from './types';
+import { Categories } from './components/Categories';
+import { AppView, Product, Sale, User, StoreSettings, Language, CartItem, Booking } from './types';
 import { translations } from './translations';
 import { Loader2, Menu, Globe, ChevronLeft, LogOut } from 'lucide-react';
 import { db, auth } from './firebase';
@@ -30,6 +31,7 @@ const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('easyPOS_theme') === 'dark');
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('easyPOS_language') as Language) || 'en');
@@ -66,6 +68,11 @@ const App: React.FC = () => {
       }
     });
 
+    const unsubscribeBookings = onSnapshot(query(collection(db, 'bookings'), orderBy('date', 'desc')), (snapshot) => {
+      const b = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
+      setBookings(b);
+    });
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const email = firebaseUser.email?.toLowerCase() || '';
@@ -99,6 +106,7 @@ const App: React.FC = () => {
       unsubscribeSales();
       unsubscribeProfiles();
       unsubscribeSettings();
+      unsubscribeBookings();
       unsubscribeAuth();
     };
   }, []);
@@ -234,6 +242,31 @@ const App: React.FC = () => {
     }
   };
 
+  const handleAddBooking = async (booking: Booking) => {
+    try {
+      await addDoc(collection(db, 'bookings'), booking);
+    } catch (error) {
+      console.error("Error adding booking:", error);
+    }
+  };
+
+  const handleUpdateBooking = async (booking: Booking) => {
+    try {
+      const { id, ...data } = booking;
+      await updateDoc(doc(db, 'bookings', id!), data as any);
+    } catch (error) {
+      console.error("Error updating booking:", error);
+    }
+  };
+
+  const handleDeleteBooking = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'bookings', id));
+    } catch (error) {
+      console.error("Error deleting booking:", error);
+    }
+  };
+
   const t = (key: string) => translations[language][key] || key;
 
   if (isAuthChecking) {
@@ -258,6 +291,10 @@ const App: React.FC = () => {
       case AppView.VENDOR_PANEL: return t('vendorPanel');
       case AppView.SETTINGS: return t('settings');
       case AppView.ORDERS: return t('ordersReturns');
+      case AppView.BOOKINGS: return t('bookings');
+      case AppView.STOCK_CHECK: return t('stockCheck');
+      case AppView.PRINT_BARCODE: return t('printBarcode');
+      case AppView.CATEGORIES: return t('categoryList');
       default: return 'System';
     }
   };
@@ -297,6 +334,13 @@ const App: React.FC = () => {
             {currentView === AppView.REPORTS && <Reports sales={sales} products={products} users={users} onGoBack={handleGoBack} language={language} />}
             {currentView === AppView.ORDERS && <Orders sales={sales} onProcessReturn={() => {}} storeSettings={storeSettings} onGoBack={handleGoBack} language={language} />}
             {currentView === AppView.SETTINGS && <Settings users={users} vendorRequests={[]} products={products} sales={sales} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} onReviewRequest={() => {}} onLogout={handleLogout} currentUser={user!} storeSettings={storeSettings} onUpdateStoreSettings={() => {}} onGoBack={handleGoBack} language={language} toggleLanguage={toggleLanguage} t={t} />}
+            {currentView === AppView.BOOKINGS && <Bookings bookings={bookings} onAddBooking={handleAddBooking} onUpdateBooking={handleUpdateBooking} onDeleteBooking={handleDeleteBooking} onGoBack={handleGoBack} language={language} t={t} />}
+            {currentView === AppView.STOCK_CHECK && <StockCheck products={products} onUpdateStock={(id, newStock) => {
+              const product = products.find(p => p.id === id);
+              if (product) handleUpdateProduct({ ...product, stock: newStock });
+            }} onGoBack={handleGoBack} language={language} t={t} />}
+            {currentView === AppView.PRINT_BARCODE && <PrintBarcode products={products} storeSettings={storeSettings} onGoBack={handleGoBack} language={language} t={t} />}
+            {currentView === AppView.CATEGORIES && <Categories products={products} onUpdateProduct={handleUpdateProduct} onGoBack={handleGoBack} language={language} t={t} />}
         </div>
         {!user?.role.includes('CUSTOMER') && <ClawdBot products={products} sales={sales} storeSettings={storeSettings} currentUser={user!} language={language} t={t} />}
       </main>

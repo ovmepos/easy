@@ -156,17 +156,39 @@ export const Login: React.FC<LoginProps> = ({
   };
 
   const applyDemoCredentials = (role: 'ADMIN' | 'VENDOR' | 'STAFF' | 'CUSTOMER') => {
-    if (role === 'CUSTOMER') {
-      setMethod('VISITOR_CODE');
-      setVendorCodeInput('VND-DEMO');
-      setVisitorCode('2026');
-    } else {
-      setMethod('CREDENTIALS');
-      setPassword('123');
-      if (role === 'ADMIN') setUsername('testadmin');
-      if (role === 'VENDOR') setUsername('vendor');
-      if (role === 'STAFF') setUsername('staff');
-    }
+    setLoading(true);
+    setError('');
+    
+    // Simulate a brief loading state for better UX
+    setTimeout(() => {
+      let demoUser: User;
+      
+      if (role === 'CUSTOMER') {
+        demoUser = {
+          id: 'demo_customer',
+          name: 'Demo Customer',
+          username: 'customer',
+          role: 'CUSTOMER',
+          vendorId: 'VND-DEMO'
+        };
+      } else {
+        const roleNames = {
+          ADMIN: 'System Administrator',
+          VENDOR: 'Premium Vendor',
+          STAFF: 'Floor Manager'
+        };
+        
+        demoUser = {
+          id: `demo_${role.toLowerCase()}`,
+          name: `Demo ${roleNames[role as keyof typeof roleNames]}`,
+          username: role.toLowerCase() === 'admin' ? 'testadmin' : role.toLowerCase(),
+          role: role,
+          password: '123'
+        };
+      }
+      
+      onLogin(demoUser);
+    }, 800);
   };
 
   return (

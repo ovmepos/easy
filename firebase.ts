@@ -5,15 +5,7 @@ import { getAuth, Auth, GoogleAuthProvider } from 'firebase/auth';
 import { getMessaging, Messaging, isSupported as isMessagingSupported } from 'firebase/messaging';
 import { getAnalytics, Analytics, isSupported as isAnalyticsSupported } from 'firebase/analytics';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAJLc92ZOEcIksLlppgck8EOv4MsehBZo0",
-  authDomain: "easypos1app.firebaseapp.com",
-  projectId: "easypos1app",
-  storageBucket: "easypos1app.firebasestorage.app",
-  messagingSenderId: "373081939889",
-  appId: "1:373081939889:web:6ddd66e081ed8229aaa790",
-  measurementId: "G-ZCDZHPRRNE"
-};
+import firebaseConfig from './firebase-applet-config.json';
 
 // Singleton storage
 let app: FirebaseApp;

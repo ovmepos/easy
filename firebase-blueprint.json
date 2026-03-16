@@ -60,6 +60,43 @@
         "vendorId": { "type": "string" }
       },
       "required": ["id", "name", "role"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "A customer booking/appointment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "customerName": { "type": "string" },
+        "customerMobile": { "type": "string" },
+        "customerAddress": { "type": "string" },
+        "bookingDate": { "type": "string" },
+        "status": { "type": "string" },
+        "notes": { "type": "string" },
+        "serviceType": { "type": "string" },
+        "vendorId": { "type": "string" }
+      },
+      "required": ["customerName", "customerMobile", "bookingDate", "status"]
+    },
+    "StockHistory": {
+      "title": "StockHistory",
+      "description": "A log of stock adjustments",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "sku": { "type": "string" },
+        "oldStock": { "type": "number" },
+        "newStock": { "type": "number" },
+        "adjustment": { "type": "number" },
+        "type": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "reason": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["productId", "oldStock", "newStock", "timestamp"]
     }
   },
   "firestore": {
@@ -74,6 +111,14 @@
     "/profiles/{profileId}": {
       "schema": "UserProfile",
       "description": "User profiles"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Customer bookings"
+    },
+    "/stock_history/{historyId}": {
+      "schema": "StockHistory",
+      "description": "Stock adjustment history"
     }
   }
 }

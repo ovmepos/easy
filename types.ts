@@ -96,6 +96,17 @@ export interface Booking {
   vendorId?: string;
 }
 
+export interface StockHistory {
+  id: string;
+  timestamp: number;
+  sku: string;
+  name: string;
+  oldStock: number;
+  newStock: number;
+  variance: number;
+  userId?: string;
+}
+
 export interface VendorSettings {
   storeName: string;
   storeAddress: string;

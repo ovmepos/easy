@@ -1,5 +1,5 @@
 {
-  "name": "2easypos",
+  "name": "easypos",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -23,7 +23,6 @@
     "@vitejs/plugin-react": "^5.1.2",
     "qrcode": "1.5.3",
     "vite-plugin-pwa": "^1.2.0",
-    "@supabase/supabase-js": "2.45.4",
     "firebase": "^12.8.0"
   },
   "devDependencies": {

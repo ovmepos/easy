@@ -67,6 +67,20 @@ service cloud.firestore {
              data.role in ['ADMIN', 'MANAGER', 'STAFF', 'CASHIER', 'CUSTOMER', 'VENDOR', 'VENDOR_STAFF'];
     }
 
+    function isValidBooking(data) {
+      return data.customerName is string && data.customerName.size() > 0 &&
+             data.customerMobile is string && data.customerMobile.size() > 0 &&
+             data.bookingDate is string &&
+             data.status in ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'];
+    }
+
+    function isValidStockHistory(data) {
+      return data.productId is string &&
+             data.oldStock is number &&
+             data.newStock is number &&
+             data.timestamp is number;
+    }
+
     match /profiles/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isValidProfile(request.resource.data) && (isOwner(userId) || isAdmin());
@@ -90,6 +104,19 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidBooking(request.resource.data);
+      allow update: if isAuthenticated() && isValidBooking(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /stock_history/{historyId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidStockHistory(request.resource.data);
+      allow update, delete: if isAdmin();
     }
   }
 }

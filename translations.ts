@@ -31,7 +31,23 @@ export const translations: Record<Language, Translations> = {
     'orderHistory': 'Order History',
     'invalidCredentials': 'Invalid Login',
     'invalidShopCode': 'Invalid Code',
-    'syncTerminal': 'Sync Terminal'
+    'syncTerminal': 'Sync Terminal',
+    'bookings': 'Bookings',
+    'stockCheck': 'Stock Check',
+    'printBarcode': 'Print Barcode',
+    'categoryList': 'Categories',
+    'addBooking': 'Add Booking',
+    'search': 'Search...',
+    'saveBooking': 'Save Booking',
+    'customerName': 'Customer Name',
+    'mobileNumber': 'Mobile Number',
+    'bookingDate': 'Booking Date',
+    'status': 'Status',
+    'address': 'Address',
+    'notes': 'Notes',
+    'noBookings': 'No bookings found',
+    'searchCategories': 'Search categories...',
+    'products': 'Products'
   },
   ar: {
     'back': 'رجوع',
@@ -62,7 +78,23 @@ export const translations: Record<Language, Translations> = {
     'orderHistory': 'سجل الطلبات',
     'invalidCredentials': 'خطأ في الدخول',
     'invalidShopCode': 'رمز غير صحيح',
-    'syncTerminal': 'مزامنة الإعدادات'
+    'syncTerminal': 'مزامنة الإعدادات',
+    'bookings': 'الحجوزات',
+    'stockCheck': 'جرد المخزون',
+    'printBarcode': 'طباعة الباركود',
+    'categoryList': 'الفئات',
+    'addBooking': 'إضافة حجز',
+    'search': 'بحث...',
+    'saveBooking': 'حفظ الحجز',
+    'customerName': 'اسم العميل',
+    'mobileNumber': 'رقم الهاتف',
+    'bookingDate': 'تاريخ الحجز',
+    'status': 'الحالة',
+    'address': 'العنوان',
+    'notes': 'ملاحظات',
+    'noBookings': 'لا توجد حجوزات',
+    'searchCategories': 'بحث في الفئات...',
+    'products': 'منتجات'
   },
   // Added missing Hindi (hi) translations to fix TypeScript missing property error
   hi: {
@@ -94,6 +126,22 @@ export const translations: Record<Language, Translations> = {
     'orderHistory': 'ऑर्डर इतिहास',
     'invalidCredentials': 'अमान्य लॉगिन',
     'invalidShopCode': 'अमान्य कोड',
-    'syncTerminal': 'टर्मिनल सिंक'
+    'syncTerminal': 'टर्मिनल सिंक',
+    'bookings': 'बुकिंग',
+    'stockCheck': 'स्टॉक चेक',
+    'printBarcode': 'बारकोड प्रिंट करें',
+    'categoryList': 'श्रेणियाँ',
+    'addBooking': 'बुकिंग जोड़ें',
+    'search': 'खोजें...',
+    'saveBooking': 'बुकिंग सहेजें',
+    'customerName': 'ग्राहक का नाम',
+    'mobileNumber': 'मोबाइल नंबर',
+    'bookingDate': 'बुकिंग की तारीख',
+    'status': 'स्थिति',
+    'address': 'पता',
+    'notes': 'नोट्स',
+    'noBookings': 'कोई बुकिंग नहीं मिली',
+    'searchCategories': 'श्रेणियाँ खोजें...',
+    'products': 'उत्पाद'
   }
 };
