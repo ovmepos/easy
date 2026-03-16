@@ -202,9 +202,17 @@ export const Inventory: React.FC<InventoryProps> = ({
                     {onAddCategory && <button onClick={() => setActiveTab('categories')} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'categories' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-lg' : 'text-slate-400'}`}>Fئات</button>}
                 </div>
                 {canAdd && activeTab === 'products' && (
-                    <button onClick={() => handleOpenModal()} className="px-8 py-4 bg-brand-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-brand-500/20 active:scale-95 flex items-center gap-3 transition-all italic">
-                        <Plus size={18} strokeWidth={3} /> {t('addProduct')}
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => handleOpenModal()} className="px-8 py-4 bg-brand-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-brand-500/20 active:scale-95 flex items-center gap-3 transition-all italic">
+                            <Plus size={18} strokeWidth={3} /> {t('addProduct')}
+                        </button>
+                        {products.filter(p => p.stock < (storeSettings?.lowStockThreshold || 10)).length > 0 && (
+                            <div className="px-6 py-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center gap-2 animate-pulse">
+                                <AlertCircle size={18} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">{products.filter(p => p.stock < (storeSettings?.lowStockThreshold || 10)).length} Low Stock Items</span>
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
         </div>
@@ -230,7 +238,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                       <div className="aspect-square rounded-[1.8rem] bg-slate-50 dark:bg-slate-800 overflow-hidden mb-4 shrink-0 relative">
                           {p.image ? <img src={p.image} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" alt={p.name} /> : <div className="w-full h-full flex items-center justify-center text-slate-200"><ImageIcon size={48} /></div>}
                           {p.hasVariants && <div className="absolute top-4 left-4 bg-brand-600 text-white text-[8px] font-black px-2 py-1 rounded-lg uppercase shadow-lg flex items-center gap-1"><Layers size={10}/> Variants</div>}
-                          {p.stock < 10 && <div className="absolute bottom-4 right-4 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-lg uppercase shadow-lg">Low Stock</div>}
+                          {p.stock < (storeSettings?.lowStockThreshold || 10) && <div className="absolute bottom-4 right-4 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-lg uppercase shadow-lg">Low Stock</div>}
                       </div>
                       <div className="flex-1 space-y-2">
                           <div className="flex justify-between items-start gap-2">

@@ -2,8 +2,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Product, CartItem, StoreSettings, Sale, Language, User, ProductVariant } from '../types';
 import { CURRENCY } from '../constants';
-import { ShoppingCart, Plus, Minus, Search, Image as ImageIcon, X, History, ShoppingBag, DollarSign, CheckCircle, Printer, MessageCircle, CreditCard, Receipt, Eye, ChevronLeft, Calendar, User as UserIcon, Tag, Percent, Contact, Layers, Sparkles, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Search, Image as ImageIcon, X, History, ShoppingBag, DollarSign, CheckCircle, Printer, MessageCircle, CreditCard, Receipt, Eye, ChevronLeft, Calendar, User as UserIcon, Tag, Percent, Contact, Layers, Sparkles, LayoutDashboard, Smartphone } from 'lucide-react';
 import QRCode from 'qrcode';
+import jsQR from 'jsqr';
 import { formatNumber, formatCurrency } from '../utils/format';
 
 interface POSProps {
@@ -53,6 +54,77 @@ export const POS: React.FC<POSProps> = ({
   const [discountValue, setDiscountValue] = useState<number>(0);
 
   const skuInputRef = useRef<HTMLInputElement>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    let animationFrameId: number;
+    
+    const scan = () => {
+      if (videoRef.current && canvasRef.current && isScanning) {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const context = canvas.getContext('2d');
+        
+        if (video.readyState === video.HAVE_ENOUGH_DATA && context) {
+          canvas.height = video.videoHeight;
+          canvas.width = video.videoWidth;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          
+          // @ts-ignore
+          const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+          });
+          
+          if (code) {
+            handleBarcodeScanned(code.data);
+            setIsScanning(false);
+            return;
+          }
+        }
+      }
+      animationFrameId = requestAnimationFrame(scan);
+    };
+
+    if (isScanning) {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play();
+            scan();
+          }
+        });
+    }
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      if (videoRef.current?.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [isScanning]);
+
+  const handleBarcodeScanned = (barcode: string) => {
+    const product = products.find(p => p.sku === barcode);
+    if (product) {
+      addToCart(product);
+      setSkuInput('');
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && skuInput) {
+        handleBarcodeScanned(skuInput);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [skuInput, products]);
 
   const categories = useMemo(() => ['All', ...Array.from(new Set(products.map(p => p.category))).sort()], [products]);
 
@@ -188,8 +260,14 @@ export const POS: React.FC<POSProps> = ({
                   ref={skuInputRef}
                   onChange={(e) => setSkuInput(e.target.value)} 
                   placeholder={t('searchProducts')} 
-                  className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 outline-none font-bold dark:text-white" 
+                  className="w-full pl-12 pr-12 py-3.5 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 outline-none font-bold dark:text-white" 
                 />
+                <button 
+                  onClick={() => setIsScanning(true)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-600 transition-all"
+                >
+                  <Smartphone size={20} />
+                </button>
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
@@ -472,6 +550,28 @@ export const POS: React.FC<POSProps> = ({
                   </div>
               </div>
           </div>
+      )}
+      {/* Scanner Modal */}
+      {isScanning && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[200] flex flex-col items-center justify-center p-6">
+          <div className="relative w-full max-w-lg aspect-square rounded-[3rem] overflow-hidden border-4 border-brand-500 shadow-[0_0_100px_rgba(14,165,233,0.3)]">
+            <video ref={videoRef} className="w-full h-full object-cover" playsInline />
+            <canvas ref={canvasRef} className="hidden" />
+            <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none">
+              <div className="w-full h-full border-2 border-brand-500/50 rounded-2xl animate-pulse"></div>
+            </div>
+            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-brand-500 shadow-[0_0_15px_rgba(14,165,233,1)] animate-scan-line"></div>
+          </div>
+          <p className="mt-8 text-white font-black uppercase tracking-[0.3em] text-xs animate-pulse">Scanning for Barcode...</p>
+          <button onClick={() => setIsScanning(false)} className="mt-12 px-12 py-5 bg-white text-slate-900 rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-2xl active:scale-95 transition-all">Cancel Scan</button>
+          <style>{`
+            @keyframes scan-line {
+              0% { transform: translateY(-150px); }
+              100% { transform: translateY(150px); }
+            }
+            .animate-scan-line { animation: scan-line 2s linear infinite; }
+          `}</style>
+        </div>
       )}
     </div>
   );

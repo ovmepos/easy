@@ -14,10 +14,12 @@ import { ClawdBot } from './components/ClawdBot';
 import { CustomerPortal } from './components/CustomerPortal';
 import { Bookings } from './components/Bookings';
 import { VendorPanel } from './components/VendorPanel';
-import { AppView, Product, Sale, User, StoreSettings, Language } from './types';
+import { AppView, Product, Sale, User, StoreSettings, Language, CartItem } from './types';
 import { translations } from './translations';
 import { Loader2, Menu, Globe, ChevronLeft, LogOut } from 'lucide-react';
-import { supabase } from './supabase';
+import { db, auth } from './firebase';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc, query, orderBy } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -34,155 +36,203 @@ const App: React.FC = () => {
   const [isSidebarVisible, setIsSidebarVisible] = useState(window.innerWidth >= 1024);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const [storeSettings, setStoreSettings] = useState<StoreSettings>({
-    name: 'easyPOS', address: 'Retail Management System', phone: '', footerMessage: 'System Operational.',
-    receiptSize: '80mm', whatsappTemplate: '', whatsappPhoneNumber: '', taxEnabled: false, taxRate: 0, taxName: 'Tax', autoPrint: false,
-    visitorAccessCode: '2026'
-  });
+  const handleLogin = (loggedInUser: User) => {
+    setUser(loggedInUser);
+    if (loggedInUser.role === 'ADMIN') setCurrentView(AppView.POS);
+    else if (loggedInUser.role === 'VENDOR') setCurrentView(AppView.VENDOR_PANEL);
+    else setCurrentView(AppView.CUSTOMER_PORTAL);
+  };
 
-  // Atomic language switch
-  const toggleLanguage = useCallback(() => {
-    setLanguage(prev => {
-      const next = prev === 'en' ? 'ar' : 'en';
-      localStorage.setItem('easyPOS_language', next);
-      document.documentElement.dir = (next === 'ar') ? 'rtl' : 'ltr';
-      return next;
+  // Firebase Sync
+  useEffect(() => {
+    const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
+      const prods = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Product));
+      setProducts(prods);
     });
+
+    const unsubscribeSales = onSnapshot(query(collection(db, 'sales'), orderBy('timestamp', 'desc')), (snapshot) => {
+      const s = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Sale));
+      setSales(s);
+    });
+
+    const unsubscribeProfiles = onSnapshot(collection(db, 'profiles'), (snapshot) => {
+      const u = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
+      setUsers(u);
+    });
+
+    const unsubscribeSettings = onSnapshot(doc(db, 'settings', 'store'), (doc) => {
+      if (doc.exists()) {
+        setStoreSettings(doc.data() as StoreSettings);
+      }
+    });
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const email = firebaseUser.email?.toLowerCase() || '';
+        const isAdmin = email === 'ovmepos@gmail.com' || email === 'nabeelkhan1007@gmail.com' || email === 'zahratalsawsen1@gmail.com';
+        
+        // Check if profile exists, if not create one
+        const userProfile: User = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || 'User',
+          username: email.split('@')[0],
+          role: isAdmin ? 'ADMIN' : 'CUSTOMER',
+          email: email,
+          avatar: firebaseUser.photoURL || undefined
+        };
+        
+        setUser(userProfile);
+        // Optionally save/update profile in Firestore
+        await setDoc(doc(db, 'profiles', firebaseUser.uid), userProfile, { merge: true });
+        
+        if (isAdmin) setCurrentView(AppView.POS);
+        else setCurrentView(AppView.CUSTOMER_PORTAL);
+      } else {
+        setUser(null);
+        setCurrentView(AppView.LOGIN);
+      }
+      setIsAuthChecking(false);
+    });
+
+    return () => {
+      unsubscribeProducts();
+      unsubscribeSales();
+      unsubscribeProfiles();
+      unsubscribeSettings();
+      unsubscribeAuth();
+    };
   }, []);
 
+  const handleAddProduct = async (product: Product) => {
+    try {
+      await addDoc(collection(db, 'products'), product);
+    } catch (error) {
+      console.error("Error adding product:", error);
+    }
+  };
+
+  const handleUpdateProduct = async (product: Product) => {
+    try {
+      const { id, ...data } = product;
+      await updateDoc(doc(db, 'products', id), data as any);
+    } catch (error) {
+      console.error("Error updating product:", error);
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'products', id));
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
+  };
+
+  const handleCheckout = async (items: CartItem[], total: number, paymentMethod: 'CASH' | 'CARD', subTotal: number, discount: number, tax: number, discountType: 'fixed' | 'percent', customerName?: string, customerPhone?: string) => {
+    const sale: Sale = {
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      items,
+      total,
+      paymentMethod,
+      subTotal,
+      discount,
+      tax,
+      discountType,
+      customerName,
+      customerPhone,
+      processedBy: user?.id
+    };
+
+    try {
+      await addDoc(collection(db, 'sales'), sale);
+      // Update stock
+      for (const item of items) {
+        const productRef = doc(db, 'products', item.id);
+        const newStock = item.stock - item.quantity;
+        await updateDoc(productRef, { stock: newStock });
+      }
+    } catch (error) {
+      console.error("Error during checkout:", error);
+    }
+  };
+
+
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>({
+    name: 'easyPOS',
+    address: 'Main Street, City',
+    phone: '+1 234 567 890',
+    email: 'contact@easypos.com',
+    currency: 'USD',
+    taxRate: 0,
+    logo: 'https://picsum.photos/seed/pos/200/200',
+    receiptFooter: 'Thank you for your business!',
+    barcodePrefix: 'EP',
+    lowStockThreshold: 10
+  });
+
+  const handleUpdateStoreSettings = async (settings: StoreSettings) => {
+    setStoreSettings(settings);
+    try {
+      await setDoc(doc(db, 'settings', 'store'), settings);
+    } catch (error) {
+      console.error("Error updating store settings:", error);
+    }
+  };
+
   const navigateTo = useCallback((view: AppView) => {
-    if (view === currentView) return;
     setNavigationHistory(prev => [...prev, currentView]);
     setCurrentView(view);
   }, [currentView]);
 
   const handleGoBack = useCallback(() => {
     if (navigationHistory.length > 0) {
-      const prev = [...navigationHistory];
-      const lastView = prev.pop();
-      setNavigationHistory(prev);
-      setCurrentView(lastView!);
-    } else {
-      let defaultView = AppView.POS;
-      if (user?.role === 'CUSTOMER') defaultView = AppView.CUSTOMER_PORTAL;
-      if (user?.role === 'VENDOR' || user?.role === 'VENDOR_STAFF') defaultView = AppView.VENDOR_PANEL;
-      setCurrentView(defaultView);
+      const prevView = navigationHistory[navigationHistory.length - 1];
+      setNavigationHistory(prev => prev.slice(0, -1));
+      setCurrentView(prevView);
     }
-  }, [navigationHistory, user]);
+  }, [navigationHistory]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setCurrentView(AppView.LOGIN);
-    setNavigationHistory([]);
-  };
-
-  const handleAddUser = async (newUser: User) => {
-    setIsSyncing(true);
     try {
-        setUsers(prev => [...prev, newUser]);
-        const { error } = await supabase.from('profiles').insert([{
-            id: newUser.id,
-            name: newUser.name,
-            username: newUser.username,
-            password: newUser.password,
-            role: newUser.role,
-            vendor_id: newUser.vendorId,
-            vendor_settings: newUser.vendorSettings,
-            vendor_staff_limit: newUser.vendorStaffLimit
-        }]);
-        if (error) throw error;
-    } catch (err) {
-        console.error("User provisioning failed", err);
-    } finally {
-        setIsSyncing(false);
+      await auth.signOut();
+      setUser(null);
+      setCurrentView(AppView.LOGIN);
+      setNavigationHistory([]);
+    } catch (error) {
+      console.error("Error logging out:", error);
     }
   };
 
-  const handleUpdateUser = async (updatedUser: User) => {
-    setIsSyncing(true);
+  const toggleLanguage = () => {
+    const newLang: Language = language === 'en' ? 'ar' : 'en';
+    setLanguage(newLang);
+    localStorage.setItem('easyPOS_language', newLang);
+  };
+
+  const handleAddUser = async (u: User) => {
     try {
-        setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
-        if (user?.id === updatedUser.id) setUser(updatedUser);
-        const { error } = await supabase.from('profiles').update({
-            name: updatedUser.name,
-            username: updatedUser.username,
-            password: updatedUser.password,
-            role: updatedUser.role,
-            vendor_id: updatedUser.vendorId,
-            vendor_settings: updatedUser.vendorSettings,
-            vendor_staff_limit: updatedUser.vendorStaffLimit
-        }).eq('id', updatedUser.id);
-        if (error) throw error;
-    } catch (err) {
-        console.error("User sync failed", err);
-    } finally {
-        setIsSyncing(false);
+      await setDoc(doc(db, 'profiles', u.id), u);
+    } catch (error) {
+      console.error("Error adding user:", error);
+    }
+  };
+
+  const handleUpdateUser = async (u: User) => {
+    try {
+      await updateDoc(doc(db, 'profiles', u.id), u as any);
+    } catch (error) {
+      console.error("Error updating user:", error);
     }
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (!window.confirm("Permanently delete this user?")) return;
-    setIsSyncing(true);
     try {
-        setUsers(prev => prev.filter(u => u.id !== id));
-        const { error } = await supabase.from('profiles').delete().eq('id', id);
-        if (error) throw error;
-    } catch (err) {
-        console.error("Identity deletion failed", err);
-    } finally {
-        setIsSyncing(false);
+      await deleteDoc(doc(db, 'profiles', id));
+    } catch (error) {
+      console.error("Error deleting user:", error);
     }
   };
-
-  useEffect(() => {
-    if (isDarkMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-    localStorage.setItem('easyPOS_theme', isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
-
-  useEffect(() => {
-    document.documentElement.dir = (language === 'ar') ? 'rtl' : 'ltr';
-  }, [language]);
-
-  useEffect(() => {
-    const fetchSessionAndUsers = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        const { data: profiles, error } = await supabase.from('profiles').select('*');
-        if (!error && profiles) {
-            const mappedUsers: User[] = profiles.map(p => ({
-                id: p.id, name: p.name, username: p.username, password: p.password, role: p.role,
-                vendorId: p.vendor_id, vendorSettings: p.vendor_settings, vendorStaffLimit: p.vendor_staff_limit, email: p.email
-            }));
-            setUsers(mappedUsers);
-        }
-
-        if (session?.user) {
-          const email = session.user.email?.toLowerCase() || '';
-          const isAdmin = email === 'nabeelkhan1007@gmail.com' || email === 'zahratalsawsen1@gmail.com';
-          const profile = profiles?.find(p => p.id === session.user.id);
-          setUser({
-            id: session.user.id,
-            name: profile?.name || session.user.user_metadata.full_name || (isAdmin ? 'Admin' : 'User'),
-            username: profile?.username || email.split('@')[0],
-            role: profile?.role || (isAdmin ? 'ADMIN' : 'CUSTOMER'),
-            email: email,
-            vendorId: profile?.vendor_id,
-            vendorSettings: profile?.vendor_settings,
-            vendorStaffLimit: profile?.vendor_staff_limit
-          });
-          if (isAdmin) setCurrentView(AppView.POS);
-          else if (profile?.role === 'VENDOR' || profile?.role === 'VENDOR_STAFF') setCurrentView(AppView.VENDOR_PANEL);
-          else setCurrentView(AppView.CUSTOMER_PORTAL);
-        }
-        setIsAuthChecking(false);
-    };
-    fetchSessionAndUsers();
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) setUser(null);
-    });
-    return () => { authListener.subscription.unsubscribe(); };
-  }, []);
 
   const t = (key: string) => translations[language][key] || key;
 
@@ -193,7 +243,7 @@ const App: React.FC = () => {
   if (!user && currentView !== AppView.CUSTOMER_PORTAL) {
     return (
       <Login 
-        onLogin={(u) => { setUser(u); setCurrentView(u.role === 'CUSTOMER' ? AppView.CUSTOMER_PORTAL : (u.role.includes('VENDOR') ? AppView.VENDOR_PANEL : AppView.POS)); }} 
+        onLogin={handleLogin} 
         users={users} t={t} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} 
         language={language} toggleLanguage={toggleLanguage} activeVendorId={null}
       />
@@ -241,9 +291,9 @@ const App: React.FC = () => {
         )}
         <div className="flex-1 overflow-hidden relative">
             {currentView === AppView.CUSTOMER_PORTAL && <CustomerPortal products={products} language={language} t={t} currentUser={user} onLoginRequest={() => navigateTo(AppView.LOGIN)} onLogout={handleLogout} onUpdateAvatar={() => {}} storeSettings={storeSettings} />}
-            {currentView === AppView.VENDOR_PANEL && <VendorPanel products={products} sales={sales} users={users} currentUser={user!} onAddProduct={()=>{}} onUpdateProduct={()=>{}} onDeleteProduct={()=>{}} onBulkUpdateProduct={() => {}} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} language={language} t={t} onGoBack={handleGoBack} />}
-            {currentView === AppView.POS && <POS products={products} sales={sales} onCheckout={() => {}} storeSettings={storeSettings} onViewOrderHistory={() => navigateTo(AppView.ORDERS)} onUpdateStoreSettings={() => {}} t={t} language={language} currentUser={user!} onGoBack={handleGoBack} />}
-            {currentView === AppView.INVENTORY && <Inventory products={products} onAddProduct={()=>{}} onUpdateProduct={()=>{}} onDeleteProduct={()=>{}} onBulkUpdateProduct={() => {}} onGoBack={handleGoBack} t={t} currentUser={user!} language={language} />}
+            {currentView === AppView.VENDOR_PANEL && <VendorPanel products={products} sales={sales} users={users} currentUser={user!} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onBulkUpdateProduct={() => {}} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} language={language} t={t} onGoBack={handleGoBack} />}
+            {currentView === AppView.POS && <POS products={products} sales={sales} onCheckout={handleCheckout} storeSettings={storeSettings} onViewOrderHistory={() => navigateTo(AppView.ORDERS)} onUpdateStoreSettings={handleUpdateStoreSettings} t={t} language={language} currentUser={user!} onGoBack={handleGoBack} />}
+            {currentView === AppView.INVENTORY && <Inventory products={products} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onBulkUpdateProduct={() => {}} onGoBack={handleGoBack} t={t} currentUser={user!} language={language} />}
             {currentView === AppView.REPORTS && <Reports sales={sales} products={products} users={users} onGoBack={handleGoBack} language={language} />}
             {currentView === AppView.ORDERS && <Orders sales={sales} onProcessReturn={() => {}} storeSettings={storeSettings} onGoBack={handleGoBack} language={language} />}
             {currentView === AppView.SETTINGS && <Settings users={users} vendorRequests={[]} products={products} sales={sales} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} onReviewRequest={() => {}} onLogout={handleLogout} currentUser={user!} storeSettings={storeSettings} onUpdateStoreSettings={() => {}} onGoBack={handleGoBack} language={language} toggleLanguage={toggleLanguage} t={t} />}

@@ -6,13 +6,13 @@ import { getMessaging, Messaging, isSupported as isMessagingSupported } from 'fi
 import { getAnalytics, Analytics, isSupported as isAnalyticsSupported } from 'firebase/analytics';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBfVt6vqEK4Ett-suudk-AWVgfF0CgZFfQ",
-  authDomain: "easyposlogin.firebaseapp.com",
-  projectId: "easyposlogin",
-  storageBucket: "easyposlogin.firebasestorage.app",
-  messagingSenderId: "767239854610",
-  appId: "1:767239854610:web:c0d1d9b6984a3f33b4d6cb",
-  measurementId: "G-59VY3VC09L"
+  apiKey: "AIzaSyAJLc92ZOEcIksLlppgck8EOv4MsehBZo0",
+  authDomain: "easypos1app.firebaseapp.com",
+  projectId: "easypos1app",
+  storageBucket: "easypos1app.firebasestorage.app",
+  messagingSenderId: "373081939889",
+  appId: "1:373081939889:web:6ddd66e081ed8229aaa790",
+  measurementId: "G-ZCDZHPRRNE"
 };
 
 // Singleton storage

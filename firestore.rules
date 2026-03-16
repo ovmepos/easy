@@ -1,0 +1,95 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: profiles
+// Document ID: Firebase Auth UID
+// Fields:
+//   - id: string (required)
+//   - name: string (required)
+//   - role: string (required) - ['ADMIN', 'MANAGER', 'STAFF', 'CASHIER', 'CUSTOMER', 'VENDOR', 'VENDOR_STAFF']
+//   - email: string (optional)
+//
+// Collection: products
+// Document ID: auto-generated
+// Fields:
+//   - id: string (required)
+//   - name: string (required)
+//   - sku: string (required)
+//   - sellPrice: number (required)
+//   - stock: number (required)
+//   - category: string (required)
+//
+// Collection: sales
+// Document ID: auto-generated
+// Fields:
+//   - id: string (required)
+//   - timestamp: number (required)
+//   - total: number (required)
+//   - items: list (required)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'ADMIN' ||
+         (request.auth.token.email in ["ovmepos@gmail.com", "nabeelkhan1007@gmail.com", "zahratalsawsen1@gmail.com"] && request.auth.token.email_verified == true));
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidProduct(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.sku is string && data.sku.size() > 0 &&
+             data.sellPrice is number && data.sellPrice >= 0 &&
+             data.stock is number;
+    }
+
+    function isValidSale(data) {
+      return data.total is number && data.total >= 0 &&
+             data.items is list &&
+             data.timestamp is number;
+    }
+
+    function isValidProfile(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.role in ['ADMIN', 'MANAGER', 'STAFF', 'CASHIER', 'CUSTOMER', 'VENDOR', 'VENDOR_STAFF'];
+    }
+
+    match /profiles/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidProfile(request.resource.data) && (isOwner(userId) || isAdmin());
+      allow update: if isAuthenticated() && isValidProfile(request.resource.data) && (isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role));
+      allow delete: if isAdmin();
+    }
+
+    match /products/{productId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidProduct(request.resource.data) && (isAdmin() || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'VENDOR');
+      allow update: if isAuthenticated() && isValidProduct(request.resource.data) && (isAdmin() || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'VENDOR');
+      allow delete: if isAdmin();
+    }
+
+    match /sales/{saleId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidSale(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}

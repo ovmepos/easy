@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A product in the inventory",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "sku": { "type": "string" },
+        "name": { "type": "string" },
+        "costPrice": { "type": "number" },
+        "sellPrice": { "type": "number" },
+        "stock": { "type": "number" },
+        "category": { "type": "string" },
+        "image": { "type": "string" },
+        "hasVariants": { "type": "boolean" },
+        "variants": { 
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "color": { "type": "string" },
+              "size": { "type": "string" },
+              "stock": { "type": "number" }
+            }
+          }
+        },
+        "vendorId": { "type": "string" }
+      },
+      "required": ["id", "sku", "name", "sellPrice", "stock", "category"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "A sales record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "items": { "type": "array" },
+        "subTotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "tax": { "type": "number" },
+        "total": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "processedBy": { "type": "string" },
+        "vendorId": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "items", "total", "paymentMethod"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "username": { "type": "string" },
+        "role": { "type": "string" },
+        "email": { "type": "string" },
+        "vendorId": { "type": "string" }
+      },
+      "required": ["id", "name", "role"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Inventory products"
+    },
+    "/sales/{saleId}": {
+      "schema": "Sale",
+      "description": "Sales records"
+    },
+    "/profiles/{profileId}": {
+      "schema": "UserProfile",
+      "description": "User profiles"
+    }
+  }
+}
