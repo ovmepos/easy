@@ -9,6 +9,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 // 5MB
+      },
       manifest: {
         name: 'easyPOS',
         short_name: 'easyPOS',
@@ -31,6 +34,7 @@ export default defineConfig({
   ],
   define: {
     // This allows the app to access the API_KEY from Vercel Environment Variables
-    'process.env.API_KEY': JSON.stringify(process.env.API_KEY)
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY),
+    'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY)
   }
 });

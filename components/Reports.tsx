@@ -133,7 +133,7 @@ export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, lan
         ['Card Payments', formatCurrency(stats.cardTotal, language, storeSettings?.currency || 'USD')]
       ]
     });
-    doc.save(`easyPOS_ZReport_${dateRange}_${Date.now()}.pdf`);
+    doc.save(`Subspace_ZReport_${dateRange}_${Date.now()}.pdf`);
   };
 
   const handleGenerateInsight = async () => {

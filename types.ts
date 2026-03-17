@@ -24,7 +24,8 @@ export enum AppView {
   SHOP_ACCESS = 'SHOP_ACCESS',
   BOOKINGS = 'BOOKINGS',
   VENDOR_PANEL = 'VENDOR_PANEL',
-  VENDOR_REQUESTS = 'VENDOR_REQUESTS'
+  VENDOR_REQUESTS = 'VENDOR_REQUESTS',
+  ROLE_OVERVIEW = 'ROLE_OVERVIEW'
 }
 
 export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CASHIER' | 'CUSTOMER' | 'VENDOR' | 'VENDOR_STAFF';
@@ -145,6 +146,45 @@ export interface User {
   vendorSettings?: VendorSettings;
 }
 
+export interface PaymentGatewaySettings {
+  thawani?: {
+    enabled: boolean;
+    apiKey: string;
+    publishableKey: string;
+    isTestMode: boolean;
+  };
+  paypal?: {
+    enabled: boolean;
+    clientId: string;
+    isTestMode: boolean;
+  };
+  upi?: {
+    enabled: boolean;
+    upiId: string;
+    payeeName: string;
+  };
+  bankTransfer?: {
+    enabled: boolean;
+    bankName: string;
+    accountNumber: string;
+    accountHolder: string;
+    ifscCode?: string;
+    iban?: string;
+  };
+  nfc?: {
+    enabled: boolean;
+    apiKey?: string;
+    terminalId?: string;
+  };
+}
+
+export interface PrinterSettings {
+  type: 'BROWSER' | 'BLUETOOTH' | 'NETWORK';
+  bluetoothAddress?: string;
+  networkIp?: string;
+  paperSize: '58mm' | '80mm';
+}
+
 export interface StoreSettings {
   name: string;
   address: string;
@@ -158,8 +198,12 @@ export interface StoreSettings {
   taxRate: number;
   taxName: string;
   autoPrint: boolean;
+  currency: string;
   cloudflareAiUrl?: string; 
   hackClubAiUrl?: string; 
   visitorAccessCode?: string; 
   aiIdentityScanEnabled?: boolean;
+  paymentGateways?: PaymentGatewaySettings;
+  printerSettings?: PrinterSettings;
+  lowStockThreshold?: number;
 }

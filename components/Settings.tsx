@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
-import { User, StoreSettings, Language, VendorRequest, Product, Sale, UserRole } from '../types';
-import { Save, UserPlus, Trash2, Edit2, X, ShieldCheck, Database, HardDrive, User as UserIcon, ChevronLeft, CheckCircle2, AlertCircle, RefreshCw, Upload, Image as ImageIcon, Store, Key } from 'lucide-react';
+import { User, StoreSettings, Language, VendorRequest, Product, Sale, UserRole, PaymentGatewaySettings, PrinterSettings } from '../types';
+import { Save, UserPlus, Trash2, Edit2, X, ShieldCheck, Database, HardDrive, User as UserIcon, ChevronLeft, CheckCircle2, AlertCircle, RefreshCw, Upload, Image as ImageIcon, Store, Key, CreditCard, Printer, Bluetooth, Smartphone, Banknote, Globe } from 'lucide-react';
 
 interface SettingsProps {
   users: User[];
@@ -27,7 +27,7 @@ export const Settings: React.FC<SettingsProps> = ({
   currentUser, storeSettings, onUpdateStoreSettings,
   onGoBack, t, products, sales
 }) => {
-  const [activeTab, setActiveTab] = useState<'store' | 'users' | 'database'>('store');
+  const [activeTab, setActiveTab] = useState<'store' | 'users' | 'payments' | 'hardware' | 'database'>('store');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userFormData, setUserFormData] = useState<Partial<User>>({
@@ -39,6 +39,24 @@ export const Settings: React.FC<SettingsProps> = ({
   const handleSaveStoreSettings = () => {
     onUpdateStoreSettings(storeSettings);
     alert('Store settings synchronized successfully.');
+  };
+
+  const updatePaymentGateway = (gateway: keyof PaymentGatewaySettings, data: any) => {
+    const currentGateways = storeSettings.paymentGateways || {};
+    onUpdateStoreSettings({
+      ...storeSettings,
+      paymentGateways: {
+        ...currentGateways,
+        [gateway]: { ...(currentGateways[gateway] || {}), ...data }
+      }
+    });
+  };
+
+  const updatePrinterSettings = (data: Partial<PrinterSettings>) => {
+    onUpdateStoreSettings({
+      ...storeSettings,
+      printerSettings: { ...(storeSettings.printerSettings || { type: 'BROWSER', paperSize: '80mm' }), ...data }
+    });
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,6 +116,21 @@ export const Settings: React.FC<SettingsProps> = ({
     setIsUserModalOpen(false);
   };
 
+  const connectBluetoothPrinter = async () => {
+    try {
+      // @ts-ignore
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] // Generic printer service
+      });
+      updatePrinterSettings({ bluetoothAddress: device.id, type: 'BLUETOOTH' });
+      alert(`Connected to ${device.name}`);
+    } catch (error) {
+      console.error('Bluetooth error:', error);
+      alert('Bluetooth printer connection failed or cancelled.');
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950 transition-colors overflow-hidden">
       <div className="bg-white dark:bg-slate-900 p-6 shadow-sm border-b border-slate-100 dark:border-slate-800 shrink-0">
@@ -111,10 +144,12 @@ export const Settings: React.FC<SettingsProps> = ({
                 <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mt-1">Global System Configuration</p>
             </div>
           </div>
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl shadow-inner">
-            <button onClick={() => setActiveTab('store')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'store' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>{t('storeIdentity')}</button>
-            <button onClick={() => setActiveTab('users')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>{t('operatorAccess')}</button>
-            <button onClick={() => setActiveTab('database')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'database' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>System Data</button>
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl shadow-inner overflow-x-auto custom-scrollbar">
+            <button onClick={() => setActiveTab('store')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'store' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>{t('storeIdentity')}</button>
+            <button onClick={() => setActiveTab('users')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>{t('operatorAccess')}</button>
+            <button onClick={() => setActiveTab('payments')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'payments' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>Gateways</button>
+            <button onClick={() => setActiveTab('hardware')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'hardware' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>Hardware</button>
+            <button onClick={() => setActiveTab('database')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'database' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>System Data</button>
           </div>
         </div>
       </div>
@@ -212,6 +247,280 @@ export const Settings: React.FC<SettingsProps> = ({
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'payments' && (
+            <div className="space-y-10 animate-fade-in">
+              <div className="bg-slate-900 text-white p-10 rounded-[3.5rem] shadow-2xl relative overflow-hidden mb-8">
+                <div className="absolute top-0 right-0 p-12 opacity-10"><CreditCard size={120} /></div>
+                <div className="relative z-10">
+                    <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-2">Payment Gateways</h3>
+                    <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">Configure global checkout protocols</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Thawani */}
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <Globe size={24} className="text-brand-500" />
+                      <h4 className="font-black dark:text-white uppercase italic">Thawani Pay</h4>
+                    </div>
+                    <button 
+                      onClick={() => updatePaymentGateway('thawani', { enabled: !storeSettings.paymentGateways?.thawani?.enabled })}
+                      className={`w-12 h-6 rounded-full transition-all relative ${storeSettings.paymentGateways?.thawani?.enabled ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'}`}
+                    >
+                      <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-all ${storeSettings.paymentGateways?.thawani?.enabled ? 'right-0.5' : 'left-0.5'}`}></div>
+                    </button>
+                  </div>
+                  {storeSettings.paymentGateways?.thawani?.enabled && (
+                    <div className="space-y-4 animate-fade-in-up">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase">API Key</label>
+                        <input type="password" value={storeSettings.paymentGateways.thawani.apiKey} onChange={e => updatePaymentGateway('thawani', { apiKey: e.target.value })} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono text-xs" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase">Publishable Key</label>
+                        <input type="text" value={storeSettings.paymentGateways.thawani.publishableKey} onChange={e => updatePaymentGateway('thawani', { publishableKey: e.target.value })} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono text-xs" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" checked={storeSettings.paymentGateways.thawani.isTestMode} onChange={e => updatePaymentGateway('thawani', { isTestMode: e.target.checked })} className="w-4 h-4 rounded" />
+                        <label className="text-[10px] font-black text-slate-400 uppercase">Sandbox Mode</label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* PayPal */}
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <CreditCard size={24} className="text-blue-500" />
+                      <h4 className="font-black dark:text-white uppercase italic">PayPal</h4>
+                    </div>
+                    <button 
+                      onClick={() => updatePaymentGateway('paypal', { enabled: !storeSettings.paymentGateways?.paypal?.enabled })}
+                      className={`w-12 h-6 rounded-full transition-all relative ${storeSettings.paymentGateways?.paypal?.enabled ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}`}
+                    >
+                      <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-all ${storeSettings.paymentGateways?.paypal?.enabled ? 'right-0.5' : 'left-0.5'}`}></div>
+                    </button>
+                  </div>
+                  {storeSettings.paymentGateways?.paypal?.enabled && (
+                    <div className="space-y-4 animate-fade-in-up">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase">Client ID</label>
+                        <input type="text" value={storeSettings.paymentGateways.paypal.clientId} onChange={e => updatePaymentGateway('paypal', { clientId: e.target.value })} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono text-xs" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" checked={storeSettings.paymentGateways.paypal.isTestMode} onChange={e => updatePaymentGateway('paypal', { isTestMode: e.target.checked })} className="w-4 h-4 rounded" />
+                        <label className="text-[10px] font-black text-slate-400 uppercase">Sandbox Mode</label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Manual UPI */}
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <Smartphone size={24} className="text-emerald-500" />
+                      <h4 className="font-black dark:text-white uppercase italic">Manual UPI</h4>
+                    </div>
+                    <button 
+                      onClick={() => updatePaymentGateway('upi', { enabled: !storeSettings.paymentGateways?.upi?.enabled })}
+                      className={`w-12 h-6 rounded-full transition-all relative ${storeSettings.paymentGateways?.upi?.enabled ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'}`}
+                    >
+                      <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-all ${storeSettings.paymentGateways?.upi?.enabled ? 'right-0.5' : 'left-0.5'}`}></div>
+                    </button>
+                  </div>
+                  {storeSettings.paymentGateways?.upi?.enabled && (
+                    <div className="space-y-4 animate-fade-in-up">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase">UPI ID (VPA)</label>
+                        <input type="text" value={storeSettings.paymentGateways.upi.upiId} onChange={e => updatePaymentGateway('upi', { upiId: e.target.value })} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs" placeholder="example@upi" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase">Payee Name</label>
+                        <input type="text" value={storeSettings.paymentGateways.upi.payeeName} onChange={e => updatePaymentGateway('upi', { payeeName: e.target.value })} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bank Transfer */}
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <Banknote size={24} className="text-amber-500" />
+                      <h4 className="font-black dark:text-white uppercase italic">Bank Transfer</h4>
+                    </div>
+                    <button 
+                      onClick={() => updatePaymentGateway('bankTransfer', { enabled: !storeSettings.paymentGateways?.bankTransfer?.enabled })}
+                      className={`w-12 h-6 rounded-full transition-all relative ${storeSettings.paymentGateways?.bankTransfer?.enabled ? 'bg-amber-600' : 'bg-slate-200 dark:bg-slate-700'}`}
+                    >
+                      <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-all ${storeSettings.paymentGateways?.bankTransfer?.enabled ? 'right-0.5' : 'left-0.5'}`}></div>
+                    </button>
+                  </div>
+                  {storeSettings.paymentGateways?.bankTransfer?.enabled && (
+                    <div className="space-y-4 animate-fade-in-up">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase">Bank Name</label>
+                        <input type="text" value={storeSettings.paymentGateways.bankTransfer.bankName} onChange={e => updatePaymentGateway('bankTransfer', { bankName: e.target.value })} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase">Account Number</label>
+                        <input type="text" value={storeSettings.paymentGateways.bankTransfer.accountNumber} onChange={e => updatePaymentGateway('bankTransfer', { accountNumber: e.target.value })} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase">Account Holder</label>
+                        <input type="text" value={storeSettings.paymentGateways.bankTransfer.accountHolder} onChange={e => updatePaymentGateway('bankTransfer', { accountHolder: e.target.value })} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* NFC Payment Setup */}
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <Smartphone size={24} className="text-indigo-500" />
+                      <h4 className="font-black dark:text-white uppercase italic">NFC Contactless</h4>
+                    </div>
+                    <button 
+                      onClick={() => updatePaymentGateway('nfc', { enabled: !storeSettings.paymentGateways?.nfc?.enabled })}
+                      className={`w-12 h-6 rounded-full transition-all relative ${storeSettings.paymentGateways?.nfc?.enabled ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'}`}
+                    >
+                      <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-all ${storeSettings.paymentGateways?.nfc?.enabled ? 'right-0.5' : 'left-0.5'}`}></div>
+                    </button>
+                  </div>
+                  {storeSettings.paymentGateways?.nfc?.enabled && (
+                    <div className="space-y-4 animate-fade-in-up">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase">Terminal API Key</label>
+                        <input type="password" value={storeSettings.paymentGateways.nfc.apiKey || ''} onChange={e => updatePaymentGateway('nfc', { apiKey: e.target.value })} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono text-xs" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase">Terminal ID</label>
+                        <input type="text" value={storeSettings.paymentGateways.nfc.terminalId || ''} onChange={e => updatePaymentGateway('nfc', { terminalId: e.target.value })} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono text-xs" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <button onClick={handleSaveStoreSettings} className="w-full py-5 bg-slate-900 dark:bg-brand-600 text-white rounded-3xl font-black uppercase tracking-widest text-xs shadow-xl active:scale-95 flex items-center justify-center gap-3 italic transition-all">
+                <Save size={20}/> Save Gateway Protocols
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'hardware' && (
+            <div className="space-y-10 animate-fade-in">
+              <div className="bg-slate-900 text-white p-10 rounded-[3.5rem] shadow-2xl relative overflow-hidden mb-8">
+                <div className="absolute top-0 right-0 p-12 opacity-10"><Printer size={120} /></div>
+                <div className="relative z-10">
+                    <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-2">Hardware Node</h3>
+                    <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">Peripherals & Device Integration</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Printer Settings */}
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                  <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
+                    <Printer size={24} className="text-brand-600" />
+                    <h4 className="font-black dark:text-white uppercase italic">Thermal Printer</h4>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Connection Type</label>
+                      <select 
+                        value={storeSettings.printerSettings?.type || 'BROWSER'} 
+                        onChange={e => updatePrinterSettings({ type: e.target.value as any })}
+                        className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-black uppercase text-[10px] tracking-widest dark:text-white outline-none"
+                      >
+                        <option value="BROWSER">System Print Dialog (Browser)</option>
+                        <option value="BLUETOOTH">Bluetooth Thermal Printer</option>
+                        <option value="NETWORK">Network / IP Printer</option>
+                      </select>
+                    </div>
+
+                    {storeSettings.printerSettings?.type === 'BLUETOOTH' && (
+                      <div className="space-y-4 animate-fade-in-up">
+                        <button 
+                          onClick={connectBluetoothPrinter}
+                          className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 dark:border-slate-700"
+                        >
+                          <Bluetooth size={16} /> {storeSettings.printerSettings.bluetoothAddress ? 'Change Printer' : 'Search Bluetooth Printer'}
+                        </button>
+                        {storeSettings.printerSettings.bluetoothAddress && (
+                          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl flex items-center gap-3">
+                            <CheckCircle2 size={16} className="text-emerald-500" />
+                            <p className="text-[10px] font-black text-emerald-600 uppercase">Linked: {storeSettings.printerSettings.bluetoothAddress}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {storeSettings.printerSettings?.type === 'NETWORK' && (
+                      <div className="space-y-2 animate-fade-in-up">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Printer IP Address</label>
+                        <input 
+                          type="text" 
+                          value={storeSettings.printerSettings.networkIp || ''} 
+                          onChange={e => updatePrinterSettings({ networkIp: e.target.value })}
+                          placeholder="192.168.1.100"
+                          className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-mono text-sm dark:text-white"
+                        />
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Paper Width</label>
+                      <div className="flex gap-2">
+                        {['58mm', '80mm'].map(size => (
+                          <button 
+                            key={size}
+                            onClick={() => updatePrinterSettings({ paperSize: size as any })}
+                            className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${storeSettings.printerSettings?.paperSize === size ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* NFC Hardware Status */}
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                  <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
+                    <Smartphone size={24} className="text-emerald-500" />
+                    <h4 className="font-black dark:text-white uppercase italic">NFC Hardware</h4>
+                  </div>
+                  <div className="space-y-4">
+                    <p className="text-xs font-medium text-slate-500 leading-relaxed">NFC status for rapid item scanning and contactless payment protocols on supported mobile devices.</p>
+                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                      <div>
+                        <p className="text-[10px] font-black dark:text-white uppercase">Contactless Pay (NFC)</p>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Gateway Status</p>
+                      </div>
+                      <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${storeSettings.paymentGateways?.nfc?.enabled ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                        {storeSettings.paymentGateways?.nfc?.enabled ? 'ACTIVE' : 'INACTIVE'}
+                      </div>
+                    </div>
+                    <div className="p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-center">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Device Support: {('NDEFReader' in window) ? 'NFC SUPPORTED' : 'NFC NOT SUPPORTED'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button onClick={handleSaveStoreSettings} className="w-full py-5 bg-slate-900 dark:bg-brand-600 text-white rounded-3xl font-black uppercase tracking-widest text-xs shadow-xl active:scale-95 flex items-center justify-center gap-3 italic transition-all">
+                <Save size={20}/> Synchronize Hardware
+              </button>
             </div>
           )}
 

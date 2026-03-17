@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ShoppingCart, Package, BarChart3, LogOut, ScanLine, Settings, MessageCircle, X, History, Wifi, WifiOff, RefreshCw, List, Moon, Sun, Globe, LayoutDashboard, ChevronLeft, ChevronRight, QrCode, CalendarDays, Store } from 'lucide-react';
+import { ShoppingCart, Package, BarChart3, LogOut, ScanLine, Settings, MessageCircle, X, History, Wifi, WifiOff, RefreshCw, List, Moon, Sun, Globe, LayoutDashboard, ChevronLeft, ChevronRight, QrCode, CalendarDays, Store, Shield } from 'lucide-react';
 import { AppView, User, UserRole, Language } from '../types';
 
 interface SidebarProps {
@@ -58,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     // ADMIN ONLY
     if (role === 'ADMIN') {
+      items.push({ view: AppView.ROLE_OVERVIEW, label: t('roleOverview'), icon: Shield });
       items.push({ view: AppView.SETTINGS, label: t('settings'), icon: Settings });
       items.push({ view: AppView.BAILEYS_SETUP, label: t('whatsappSetup'), icon: MessageCircle });
     }
@@ -76,7 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <LayoutDashboard size={24} className="text-white" />
            </div>
            <div>
-              <h1 className="text-xl font-black tracking-tight text-white uppercase italic leading-none group-hover:text-brand-400 transition-colors">easyPOS</h1>
+              <h1 className="text-xl font-black tracking-tight text-white uppercase italic leading-none group-hover:text-brand-400 transition-colors">Subspace</h1>
               <div className="flex items-center gap-1.5 mt-1.5">
                   <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`}></div>
                   <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-none">

@@ -73,7 +73,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
               <ShoppingBag className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="text-xl font-black italic uppercase tracking-tighter dark:text-white">easyPOS <span className="text-brand-600">Shop</span></h1>
+              <h1 className="text-xl font-black italic uppercase tracking-tighter dark:text-white">Subspace <span className="text-brand-600">Shop</span></h1>
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">Virtual Showroom</p>
             </div>
           </div>

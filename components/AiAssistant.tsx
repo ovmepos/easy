@@ -79,7 +79,7 @@ export const AiAssistant: React.FC<AiAssistantProps> = ({
       };
 
       const systemInstruction = `
-        You are the easyPOS AI Business Assistant. You are integrated into a Point of Sale app for ${storeSettings.name}.
+        You are the Subspace AI Business Assistant. You are integrated into a Point of Sale app for ${storeSettings.name}.
         Your goal is to help ${currentUser.name} (${currentUser.role}) understand their business data.
         
         CURRENT BUSINESS CONTEXT:

@@ -1,8 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
-import { Search, MapPin, ShoppingCart, MessageCircle, Wallet, Compass, Home as HomeIcon, ChevronLeft, ChevronRight, Globe, User as UserIcon, LogOut, ShieldCheck, Truck, Headphones, Zap } from 'lucide-react';
-import { Language, User, StoreSettings, Product } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, MapPin, ShoppingCart, MessageCircle, Wallet, Compass, Home as HomeIcon, ChevronLeft, ChevronRight, Globe, User as UserIcon, LogOut, ShieldCheck, Truck, Headphones, Zap, Camera, Scan, X, Loader2, Database, Shield } from 'lucide-react';
+import { Language, User, StoreSettings, Product, AppView } from '../types';
 import { formatCurrency } from '../utils/format';
+import { GoogleGenAI } from "@google/genai";
+import { Html5QrcodeScanner } from 'html5-qrcode';
 
 interface HomeProps {
   language: Language;
@@ -11,8 +13,9 @@ interface HomeProps {
   onLogout: () => void;
   onLoginRequest: () => void;
   storeSettings: StoreSettings;
-  onNavigate: (view: any) => void;
+  onNavigate: (view: AppView) => void;
   products: Product[];
+  onSeedDemoProducts?: () => void;
 }
 
 export const Home: React.FC<HomeProps> = ({
@@ -23,11 +26,72 @@ export const Home: React.FC<HomeProps> = ({
   onLoginRequest,
   storeSettings,
   onNavigate,
-  products
+  products,
+  onSeedDemoProducts
 }) => {
   const [activeBanner, setActiveBanner] = useState(0);
   const [location, setLocation] = useState<string>(t('detectingLocation'));
   const [showPolicy, setShowPolicy] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isScanning, setIsScanning] = useState(false);
+  const [isImageAnalyzing, setIsImageAnalyzing] = useState(false);
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+
+  useEffect(() => {
+    if (isScanning) {
+      scannerRef.current = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        /* verbose= */ false
+      );
+      scannerRef.current.render((decodedText) => {
+        setSearchQuery(decodedText);
+        setIsScanning(false);
+        scannerRef.current?.clear();
+      }, (error) => {
+        // console.warn(error);
+      });
+    }
+    return () => {
+      scannerRef.current?.clear();
+    };
+  }, [isScanning]);
+
+  const handleImageSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImageAnalyzing(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Data = (reader.result as string).split(',')[1];
+        
+        const response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: [
+            {
+              parts: [
+                { text: "Analyze this image and return 2-3 keywords that describe the product in it for a search query. Return ONLY the keywords separated by spaces." },
+                { inlineData: { mimeType: file.type, data: base64Data } }
+              ]
+            }
+          ]
+        });
+
+        const keywords = response.text || '';
+        setSearchQuery(keywords);
+        setIsImageAnalyzing(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Image search error:", error);
+      setIsImageAnalyzing(false);
+    }
+  };
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -57,88 +121,132 @@ export const Home: React.FC<HomeProps> = ({
   const banners = [
     {
       id: 1,
-      title: storeSettings.name || "Welcome to EasyPOS",
-      discount: "New Arrivals",
-      action: "SHOP NOW",
-      color: "from-brand-600 to-indigo-600",
-      image: "https://picsum.photos/seed/shop/800/400"
+      title: "Canva Pro",
+      discount: "Flat 80% OFF",
+      action: "SUBSCRIBE NOW",
+      color: "from-[#00c4cc] to-[#7d2ae8]",
+      image: "https://picsum.photos/seed/canva/800/400"
     },
     {
       id: 2,
-      title: "Exclusive Offers",
-      discount: "Up to 50% OFF",
-      action: "EXPLORE",
-      color: "from-emerald-600 to-teal-500",
-      image: "https://picsum.photos/seed/offer/800/400"
+      title: "Zomato Gold",
+      discount: "Buy 1 Get 1 Free",
+      action: "BUY NOW",
+      color: "from-[#cb202d] to-[#ff4d4d]",
+      image: "https://picsum.photos/seed/zomato/800/400"
     }
   ];
 
-  const categories = Array.from(new Set(products.map(p => p.category))).map(cat => ({
-    name: cat,
-    count: `${products.filter(p => p.category === cat).length} Products`,
-    icon: '📦',
-    color: 'bg-brand-500/10'
-  }));
+  const favouriteBrands = [
+    { name: 'YouTube', icon: 'https://cdn-icons-png.flaticon.com/512/1384/1384060.png', discount: '70% OFF' },
+    { name: 'Netflix', icon: 'https://cdn-icons-png.flaticon.com/512/5977/5977590.png', discount: '50% OFF' },
+    { name: 'Spotify', icon: 'https://cdn-icons-png.flaticon.com/512/174/174872.png', discount: '60% OFF' },
+    { name: 'Amazon', icon: 'https://cdn-icons-png.flaticon.com/512/5968/5968202.png', discount: '40% OFF' },
+    { name: 'Disney+', icon: 'https://cdn-icons-png.flaticon.com/512/5968/5968764.png', discount: '30% OFF' },
+    { name: 'Apple', icon: 'https://cdn-icons-png.flaticon.com/512/0/747.png', discount: '20% OFF' },
+  ];
+
+  const giftCardCategories = [
+    { name: t('food'), icon: '🍔', color: 'bg-orange-500/20' },
+    { name: t('entertainment'), icon: '🎬', color: 'bg-purple-500/20' },
+    { name: t('fashion'), icon: '👗', color: 'bg-pink-500/20' },
+    { name: t('homeNeeds'), icon: '🏠', color: 'bg-blue-500/20' },
+    { name: t('healthcare'), icon: '🏥', color: 'bg-green-500/20' },
+    { name: t('news'), icon: '📰', color: 'bg-yellow-500/20' },
+  ];
 
   const featuredProducts = products.slice(0, 8);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-brand-500 selection:text-white">
+      {/* Ticker */}
+      <div className="bg-brand-500 py-1.5 overflow-hidden whitespace-nowrap">
+        <div className="inline-block animate-marquee text-[10px] font-bold uppercase tracking-widest px-4">
+          🔥 Limited Time Offer: Get 80% OFF on Canva Pro! • New Gift Cards Added: Amazon, Netflix, Spotify • Free Delivery on all orders above $50 • 24/7 Support Available 🔥
+        </div>
+      </div>
+
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5 px-4 lg:px-8 py-4">
+      <header className="sticky top-0 z-50 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5 px-4 lg:px-8 py-3">
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('HOME')}>
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 bg-black rounded-sm rotate-45"></div>
+              <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
+                <div className="w-4 h-4 bg-white rounded-sm rotate-45"></div>
               </div>
-              <span className="text-xl font-bold tracking-tighter">easyPOS</span>
+              <span className="text-xl font-bold tracking-tighter">Subspace</span>
             </div>
 
-            <div className="hidden xl:flex items-center gap-2 text-xs text-zinc-400">
-              <MapPin size={14} className="text-brand-500" />
-              <div className="flex flex-col">
-                <span className="text-[10px] opacity-50">Delivery in minutes</span>
-                <span className="font-bold text-white truncate max-w-[200px]">{location}</span>
-              </div>
-            </div>
+            <nav className="hidden xl:flex items-center gap-6 text-xs font-bold text-zinc-400">
+              <button onClick={() => onNavigate('HOME')} className="text-white uppercase tracking-widest">{t('home')}</button>
+              <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="hover:text-white uppercase tracking-widest">{t('explore')}</button>
+              <button onClick={() => onNavigate('CUSTOMER_DASHBOARD')} className="hover:text-white uppercase tracking-widest">{t('wallet')}</button>
+              <button onClick={() => onNavigate('CUSTOMER_DASHBOARD')} className="hover:text-white uppercase tracking-widest">{t('chat')}</button>
+              <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="hover:text-white uppercase tracking-widest relative">
+                {t('cart')}
+                <span className="absolute -top-2 -right-2 w-3.5 h-3.5 bg-brand-500 text-white text-[8px] rounded-full flex items-center justify-center">0</span>
+              </button>
+            </nav>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-zinc-400">
-            <button onClick={() => onNavigate('HOME')} className="text-white flex items-center gap-2"><HomeIcon size={18} /> {t('home')}</button>
-            <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="hover:text-white flex items-center gap-2"><Compass size={18} /> {t('explore')}</button>
-            <button onClick={() => onNavigate('CUSTOMER_DASHBOARD')} className="hover:text-white flex items-center gap-2"><Wallet size={18} /> {t('wallet')}</button>
-            <button onClick={() => onNavigate('CUSTOMER_DASHBOARD')} className="hover:text-white flex items-center gap-2"><MessageCircle size={18} /> {t('chat')}</button>
-            <button className="hover:text-white flex items-center gap-2 relative">
-              <ShoppingCart size={18} /> {t('cart')}
-              <span className="absolute -top-2 -right-2 w-4 h-4 bg-brand-500 text-white text-[10px] rounded-full flex items-center justify-center">0</span>
-            </button>
-          </nav>
-
-          <div className="flex-1 max-w-md relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-white transition-colors" size={18} />
+          <div className="flex-1 max-w-xl relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-white transition-colors" size={16} />
             <input 
               type="text" 
-              placeholder="Quick search" 
-              className="w-full bg-zinc-900/50 border border-white/10 rounded-full py-2.5 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all"
+              placeholder={t('quickSearch')} 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-zinc-900/80 border border-white/10 rounded-xl py-2 pl-11 pr-24 text-sm focus:outline-none focus:border-brand-500/50 transition-all"
             />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <button 
+                onClick={() => setIsScanning(true)}
+                className="p-1.5 hover:bg-white/10 rounded-lg text-zinc-500 hover:text-white transition-all"
+                title={t('barcodeScan')}
+              >
+                <Scan size={16} />
+              </button>
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="p-1.5 hover:bg-white/10 rounded-lg text-zinc-500 hover:text-white transition-all"
+                title={t('imageSearch')}
+              >
+                {isImageAnalyzing ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+              </button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleImageSearch} 
+                className="hidden" 
+                accept="image/*"
+              />
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-white/5 uppercase">
-              {language} <Globe size={14} />
+            <div className="hidden md:flex items-center gap-2 text-[10px] text-zinc-400">
+              <MapPin size={12} className="text-brand-500" />
+              <div className="flex flex-col">
+                <span className="opacity-50">{t('deliveryInMinutes')}</span>
+                <span className="font-bold text-white truncate max-w-[120px]">{location}</span>
+              </div>
+            </div>
+
+            <button className="flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-zinc-900 border border-white/5 uppercase">
+              {language} <Globe size={12} />
             </button>
+
             {currentUser ? (
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center font-bold text-sm border-2 border-white/10 overflow-hidden">
+                <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center font-bold text-sm border border-white/10 overflow-hidden">
                   {currentUser.avatar ? <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" /> : currentUser.name[0]}
                 </div>
                 <button onClick={onLogout} className="p-2 hover:bg-red-500/10 text-zinc-500 hover:text-red-500 rounded-lg transition-all">
-                  <LogOut size={20} />
+                  <LogOut size={18} />
                 </button>
               </div>
             ) : (
-              <button onClick={onLoginRequest} className="px-6 py-2.5 bg-white text-black rounded-full text-xs font-bold hover:bg-zinc-200 transition-all">
+              <button onClick={onLoginRequest} className="px-5 py-2 bg-brand-500 text-white rounded-xl text-[10px] font-bold hover:bg-brand-600 transition-all uppercase tracking-widest">
                 Login
               </button>
             )}
@@ -146,118 +254,133 @@ export const Home: React.FC<HomeProps> = ({
         </div>
       </header>
 
-      <main className="max-w-screen-2xl mx-auto px-4 lg:px-8 py-8 space-y-16">
+      <main className="max-w-screen-2xl mx-auto px-4 lg:px-8 py-6 space-y-12">
         {/* Carousel */}
         <div className="relative group">
-          <div className="flex gap-4 overflow-hidden rounded-3xl">
+          <div className="flex gap-4 overflow-hidden rounded-[2rem]">
             {banners.map((banner, idx) => (
               <div 
                 key={banner.id}
-                className={`min-w-full lg:min-w-[calc(50%-8px)] h-64 lg:h-80 rounded-3xl bg-gradient-to-br ${banner.color} p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-500`}
+                className={`min-w-full h-64 lg:h-96 rounded-[2rem] bg-gradient-to-br ${banner.color} p-8 lg:p-12 flex flex-col justify-center relative overflow-hidden transition-all duration-700 ease-in-out`}
                 style={{ transform: `translateX(-${activeBanner * 100}%)` }}
               >
-                <div className="relative z-10 space-y-2">
-                  <h2 className="text-2xl lg:text-4xl font-bold">{banner.title}</h2>
-                  <p className="text-4xl lg:text-6xl font-black">{banner.discount}</p>
-                  <p className="text-xs opacity-80">off</p>
+                <div className="relative z-10 space-y-4 max-w-md">
+                  <div className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest">
+                    {banner.title}
+                  </div>
+                  <h2 className="text-4xl lg:text-6xl font-black leading-tight">{banner.discount}</h2>
+                  <button className="w-fit px-8 py-3 bg-white text-black rounded-xl text-xs font-black shadow-xl hover:scale-105 transition-all uppercase tracking-widest">
+                    {banner.action}
+                  </button>
                 </div>
-                <button className="relative z-10 w-fit px-8 py-3 bg-white text-black rounded-full text-xs font-black shadow-xl hover:scale-105 transition-all">
-                  {banner.action}
-                </button>
-                <img src={banner.image} alt="" className="absolute right-0 top-0 h-full w-1/2 object-cover opacity-40 mix-blend-overlay" />
+                <img src={banner.image} alt="" className="absolute right-0 top-0 h-full w-2/3 object-cover opacity-30 mix-blend-overlay" />
+                
+                {/* Decorative elements */}
+                <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute -top-12 -left-12 w-48 h-48 bg-black/10 rounded-full blur-2xl"></div>
               </div>
             ))}
           </div>
           
           <button 
             onClick={() => setActiveBanner(prev => Math.max(0, prev - 1))}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-black/40 transition-all opacity-0 group-hover:opacity-100"
+            className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center hover:bg-black/50 transition-all opacity-0 group-hover:opacity-100"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={20} />
           </button>
           <button 
             onClick={() => setActiveBanner(prev => Math.min(banners.length - 1, prev + 1))}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-black/40 transition-all opacity-0 group-hover:opacity-100"
+            className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center hover:bg-black/50 transition-all opacity-0 group-hover:opacity-100"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={20} />
           </button>
 
-          <div className="flex justify-center gap-2 mt-4">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
             {banners.map((_, idx) => (
               <button 
                 key={idx}
                 onClick={() => setActiveBanner(idx)}
-                className={`h-1.5 rounded-full transition-all ${activeBanner === idx ? 'w-8 bg-brand-500' : 'w-2 bg-zinc-700'}`}
+                className={`h-1.5 rounded-full transition-all ${activeBanner === idx ? 'w-8 bg-white' : 'w-2 bg-white/30'}`}
               />
             ))}
           </div>
         </div>
 
-        {/* Features Section */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {[
-            { icon: <Truck className="text-brand-500" />, title: "Fast Delivery", desc: "Get your orders in record time" },
-            { icon: <ShieldCheck className="text-brand-500" />, title: "Secure Payments", desc: "100% protected transactions" },
-            { icon: <Zap className="text-brand-500" />, title: "Best Quality", desc: "Handpicked premium products" },
-            { icon: <Headphones className="text-brand-500" />, title: "24/7 Support", desc: "Always here to help you" }
-          ].map((feature, idx) => (
-            <div key={idx} className="flex items-center gap-4 p-6 bg-zinc-900/30 rounded-2xl border border-white/5">
-              <div className="w-12 h-12 bg-zinc-900 rounded-xl flex items-center justify-center">
-                {feature.icon}
-              </div>
-              <div>
-                <h4 className="font-bold text-sm">{feature.title}</h4>
-                <p className="text-[10px] text-zinc-500">{feature.desc}</p>
-              </div>
-            </div>
-          ))}
-        </section>
-
-        {/* Categories */}
+        {/* Favourite Brands */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold">Shop by Category</h3>
-            <button className="text-brand-500 text-xs font-bold hover:underline">View All</button>
+            <h3 className="text-lg font-bold uppercase tracking-widest">{t('favouriteBrands')}</h3>
+            <button className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {categories.map((cat, idx) => (
-              <div key={idx} className="bg-zinc-900/50 border border-white/5 rounded-2xl p-4 hover:border-white/20 transition-all cursor-pointer group">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-[10px] font-bold text-zinc-500">{cat.count}</span>
-                  <div className={`w-10 h-10 ${cat.color} rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-all`}>
-                    {cat.icon}
+          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+            {favouriteBrands.map((brand, idx) => (
+              <div key={idx} className="flex flex-col items-center gap-3 min-w-[100px] group cursor-pointer">
+                <div className="w-20 h-20 bg-zinc-900 border border-white/5 rounded-full p-4 group-hover:border-brand-500/50 transition-all relative">
+                  <img src={brand.icon} alt={brand.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform" />
+                  <div className="absolute -top-1 -right-1 bg-brand-500 text-[8px] font-black px-1.5 py-0.5 rounded-full">
+                    {brand.discount}
                   </div>
                 </div>
-                <p className="font-bold text-sm">{cat.name}</p>
+                <span className="text-[10px] font-bold text-zinc-400 group-hover:text-white">{brand.name}</span>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Featured Products */}
+        {/* Gift Cards */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold">Featured Products</h3>
-            <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="text-brand-500 text-xs font-bold hover:underline">View All</button>
+            <h3 className="text-lg font-bold uppercase tracking-widest">{t('giftCards')}</h3>
+            <button className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {giftCardCategories.map((cat, idx) => (
+              <div key={idx} className={`${cat.color} border border-white/5 rounded-2xl p-5 hover:border-white/20 transition-all cursor-pointer group text-center`}>
+                <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{cat.icon}</div>
+                <p className="font-bold text-xs uppercase tracking-widest">{cat.name}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Featured Products Grid */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold uppercase tracking-widest">Trending Subscriptions</h3>
+            <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProducts.map((product, idx) => (
-              <div key={idx} className="bg-zinc-900/50 border border-white/5 rounded-3xl p-4 hover:bg-zinc-900 transition-all group cursor-pointer">
-                <div className="aspect-square rounded-2xl bg-zinc-800 mb-4 overflow-hidden relative">
+              <div key={idx} className="bg-zinc-900/40 border border-white/5 rounded-[2rem] p-5 hover:bg-zinc-900 transition-all group cursor-pointer relative overflow-hidden">
+                <div className="aspect-video rounded-xl bg-zinc-800 mb-4 overflow-hidden relative">
                   {product.image ? (
-                    <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
+                    <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerPolicy="no-referrer" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-zinc-700">📦</div>
                   )}
-                  <div className="absolute top-2 right-2 px-2 py-1 bg-brand-500 text-[8px] font-black rounded-lg uppercase tracking-widest">New</div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+                      <Zap size={12} className="text-yellow-400" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Premium</span>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{product.category}</p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[9px] text-zinc-500 uppercase font-black tracking-widest">{product.category}</p>
+                    <div className="flex gap-0.5">
+                      {[1,2,3,4,5].map(s => <div key={s} className="w-1 h-1 bg-brand-500 rounded-full"></div>)}
+                    </div>
+                  </div>
                   <h4 className="font-bold text-sm truncate">{product.name}</h4>
                   <div className="flex items-center justify-between pt-2">
-                    <span className="text-lg font-black text-brand-500">{formatCurrency(product.sellPrice, language, storeSettings?.currency || 'USD')}</span>
-                    <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all">
-                      +
+                    <div className="flex flex-col">
+                      <span className="text-[8px] text-zinc-500 line-through">{formatCurrency(product.sellPrice * 1.5, language, storeSettings?.currency || 'USD')}</span>
+                      <span className="text-lg font-black text-brand-500">{formatCurrency(product.sellPrice, language, storeSettings?.currency || 'USD')}</span>
+                    </div>
+                    <button className="px-4 py-2 bg-white text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-500 hover:text-white transition-all">
+                      {t('subscribeNow')}
                     </button>
                   </div>
                 </div>
@@ -266,121 +389,163 @@ export const Home: React.FC<HomeProps> = ({
           </div>
         </section>
 
-        {/* About Section */}
-        <section className="bg-zinc-900/50 border border-white/5 rounded-[40px] p-8 lg:p-16 flex flex-col lg:flex-row items-center gap-12">
-          <div className="flex-1 space-y-6">
-            <div className="inline-block px-4 py-1.5 bg-brand-500/10 border border-brand-500/20 rounded-full text-brand-500 text-[10px] font-black uppercase tracking-widest">
-              {t('ourMission')}
-            </div>
-            <h2 className="text-3xl lg:text-5xl font-black leading-tight">
-              Revolutionizing Retail with <span className="text-brand-500">Intelligence</span>
-            </h2>
-            <p className="text-sm text-zinc-400 leading-relaxed max-w-xl">
-              EasyPOS is not just a point of sale; it's a complete ecosystem designed to empower small and medium businesses. From AI-driven inventory insights to seamless customer engagement, we provide the tools you need to scale in the modern digital economy.
-            </p>
-            <div className="flex gap-4">
-              <button className="px-8 py-3 bg-brand-500 text-white rounded-full text-xs font-black hover:bg-brand-600 transition-all">
-                {t('getStarted')}
-              </button>
-              <button className="px-8 py-3 bg-white/5 border border-white/10 text-white rounded-full text-xs font-black hover:bg-white/10 transition-all">
-                {t('aboutUs')}
-              </button>
+        {/* Subspace Premium Banner */}
+        <section className="bg-gradient-to-r from-brand-600 to-indigo-600 rounded-[2.5rem] p-8 lg:p-12 flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
+          <div className="relative z-10 space-y-4 text-center lg:text-left">
+            <h2 className="text-3xl lg:text-5xl font-black uppercase tracking-tighter italic">{t('subspacePremium')}</h2>
+            <p className="text-sm opacity-90 font-medium max-w-md">{t('lookingForUpgrade')}</p>
+            <button className="px-10 py-4 bg-white text-black rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all">
+              {t('buyNow')}
+            </button>
+          </div>
+          <div className="relative z-10 flex -space-x-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="w-16 h-16 rounded-full border-4 border-brand-600 bg-zinc-800 overflow-hidden">
+                <img src={`https://picsum.photos/seed/user${i}/100/100`} alt="" className="w-full h-full object-cover" />
+              </div>
+            ))}
+            <div className="w-16 h-16 rounded-full border-4 border-brand-600 bg-white text-black flex items-center justify-center font-black text-xs">
+              +10k
             </div>
           </div>
-          <div className="flex-1 grid grid-cols-2 gap-4 w-full">
-            <div className="aspect-square bg-brand-500 rounded-3xl overflow-hidden">
-               <img src="https://picsum.photos/seed/tech1/400/400" alt="" className="w-full h-full object-cover mix-blend-overlay opacity-50" />
-            </div>
-            <div className="aspect-square bg-zinc-800 rounded-3xl overflow-hidden mt-8">
-               <img src="https://picsum.photos/seed/tech2/400/400" alt="" className="w-full h-full object-cover opacity-50" />
-            </div>
-          </div>
+          {/* Background shapes */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/20 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl"></div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#050505] border-t border-white/5 pt-16 pb-8 px-4 lg:px-8">
+      <footer className="bg-[#050505] border-t border-white/5 pt-16 pb-8 px-4 lg:px-8 mt-20">
         <div className="max-w-screen-2xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           <div className="space-y-6">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 bg-black rounded-sm rotate-45"></div>
+              <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
+                <div className="w-4 h-4 bg-white rounded-sm rotate-45"></div>
               </div>
-              <span className="text-xl font-bold tracking-tighter">easyPOS</span>
+              <span className="text-xl font-bold tracking-tighter">Subspace</span>
             </div>
-            <p className="text-xs text-zinc-500 leading-relaxed">
+            <p className="text-[10px] text-zinc-500 leading-relaxed uppercase tracking-widest">
               {t('copyright')} {t('poweredBy')}
             </p>
-            <div className="flex gap-4 text-zinc-500">
-              <button className="hover:text-white transition-colors">LinkedIn</button>
-              <button className="hover:text-white transition-colors">Instagram</button>
-              <button className="hover:text-white transition-colors">Facebook</button>
+            <div className="flex gap-4">
+              {['Instagram', 'Twitter', 'LinkedIn'].map(social => (
+                <button key={social} className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all">
+                  <Globe size={14} />
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="font-bold text-sm">{t('legal')}</h4>
-            <ul className="text-xs text-zinc-500 space-y-3">
-              <li onClick={() => setShowPolicy(t('privacyPolicy'))} className="hover:text-white cursor-pointer">{t('privacyPolicy')}</li>
-              <li onClick={() => setShowPolicy(t('termsConditions'))} className="hover:text-white cursor-pointer">{t('termsConditions')}</li>
-              <li onClick={() => setShowPolicy(t('refundPolicy'))} className="hover:text-white cursor-pointer">{t('refundPolicy')}</li>
-              <li className="hover:text-white cursor-pointer">Shipping Policy</li>
-            </ul>
-          </div>
-
-          <div className="space-y-4">
-            <h4 className="font-bold text-sm">{t('company')}</h4>
-            <ul className="text-xs text-zinc-500 space-y-3">
-              <li onClick={() => setShowPolicy(t('aboutUs'))} className="hover:text-white cursor-pointer">{t('aboutUs')}</li>
-              <li onClick={() => setShowPolicy(t('contactUs'))} className="hover:text-white cursor-pointer">{t('contactUs')}</li>
-              <li className="hover:text-white cursor-pointer">{t('services')}</li>
-              <li className="hover:text-white cursor-pointer">{t('support')}</li>
+          <div className="space-y-6">
+            <h4 className="font-black text-xs uppercase tracking-widest text-brand-500">{t('legal')}</h4>
+            <ul className="text-[10px] font-bold text-zinc-500 space-y-4 uppercase tracking-widest">
+              <li onClick={() => setShowPolicy(t('privacyPolicy'))} className="hover:text-white cursor-pointer transition-colors">{t('privacyPolicy')}</li>
+              <li onClick={() => setShowPolicy(t('termsConditions'))} className="hover:text-white cursor-pointer transition-colors">{t('termsConditions')}</li>
+              <li onClick={() => setShowPolicy(t('refundPolicy'))} className="hover:text-white cursor-pointer transition-colors">{t('refundPolicy')}</li>
+              <li className="hover:text-white cursor-pointer transition-colors">{t('shippingPolicy')}</li>
             </ul>
           </div>
 
           <div className="space-y-6">
-            <h4 className="font-bold text-sm">Download Our App</h4>
+            <h4 className="font-black text-xs uppercase tracking-widest text-brand-500">{t('company')}</h4>
+            <ul className="text-[10px] font-bold text-zinc-500 space-y-4 uppercase tracking-widest">
+              <li onClick={() => setShowPolicy(t('aboutUs'))} className="hover:text-white cursor-pointer transition-colors">{t('aboutUs')}</li>
+              <li onClick={() => setShowPolicy(t('contactUs'))} className="hover:text-white cursor-pointer transition-colors">{t('contactUs')}</li>
+              <li className="hover:text-white cursor-pointer transition-colors">{t('services')}</li>
+              <li className="hover:text-white cursor-pointer transition-colors">{t('support')}</li>
+            </ul>
+          </div>
+
+          <div className="space-y-6">
+            <h4 className="font-black text-xs uppercase tracking-widest text-brand-500">{t('downloadApp')}</h4>
             <div className="flex flex-col gap-3">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" className="h-10 w-fit cursor-pointer" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" className="h-10 w-fit cursor-pointer" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" className="h-9 w-fit cursor-pointer hover:opacity-80 transition-opacity" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" className="h-9 w-fit cursor-pointer hover:opacity-80 transition-opacity" />
             </div>
           </div>
         </div>
         
-        <div className="max-w-screen-2xl mx-auto pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-4 bg-zinc-900/50 border border-white/10 rounded-full px-4 py-2">
-            <span className="text-[10px] font-bold text-zinc-400">Suggest a Subscription!</span>
-            <input type="text" placeholder="Submit Your Favourite" className="bg-transparent text-[10px] outline-none w-40" />
-            <button className="bg-brand-500 p-1.5 rounded-full"><ChevronRight size={14} /></button>
+        <div className="max-w-screen-2xl mx-auto pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-4 bg-zinc-900 border border-white/5 rounded-xl px-4 py-2.5 w-full md:w-auto">
+            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{t('suggestSubscription')}</span>
+            <input type="text" placeholder={t('submitFavourite')} className="bg-transparent text-[10px] outline-none flex-1 md:w-48 font-bold" />
+            <button className="bg-brand-500 p-1.5 rounded-lg text-white hover:bg-brand-600 transition-all"><ChevronRight size={14} /></button>
           </div>
-          <div className="text-[10px] text-zinc-500">
-            Current Location: <span className="text-brand-500 font-bold">{location}</span>
+          
+          <div className="flex items-center gap-6">
+            {currentUser?.role === 'ADMIN' && (
+              <button onClick={onSeedDemoProducts} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-500 hover:text-emerald-400 transition-colors">
+                <Database size={14} /> Seed Products
+              </button>
+            )}
+            <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              {t('location')}: <span className="text-brand-500">{location}</span>
+            </div>
           </div>
         </div>
       </footer>
 
-      {/* Policy Modal */}
-      {showPolicy && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-white/10 rounded-[32px] w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
+      {/* Barcode Scanner Modal */}
+      {isScanning && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl">
+          <div className="bg-zinc-900 border border-white/10 rounded-[2.5rem] w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
             <div className="p-6 border-b border-white/5 flex items-center justify-between">
-              <h3 className="text-xl font-bold">{showPolicy}</h3>
-              <button onClick={() => setShowPolicy(null)} className="p-2 hover:bg-white/5 rounded-full transition-all">
-                <LogOut size={20} className="rotate-180" />
+              <h3 className="text-lg font-black uppercase tracking-widest flex items-center gap-3">
+                <Scan className="text-brand-500" /> {t('barcodeScan')}
+              </h3>
+              <button onClick={() => setIsScanning(false)} className="p-2 hover:bg-white/5 rounded-full transition-all">
+                <X size={20} />
               </button>
             </div>
-            <div className="p-8 overflow-y-auto text-sm text-zinc-400 leading-relaxed space-y-4">
+            <div className="p-8">
+              <div id="reader" className="w-full rounded-2xl overflow-hidden border border-white/10 bg-black"></div>
+              <p className="text-center text-[10px] font-bold text-zinc-500 mt-6 uppercase tracking-widest">Point your camera at a barcode</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Bottom Navigation */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#0a0a0a]/95 backdrop-blur-2xl border-t border-white/5 px-6 py-3">
+        <div className="flex items-center justify-between max-w-md mx-auto">
+          <button onClick={() => onNavigate('HOME')} className="flex flex-col items-center gap-1 text-brand-500">
+            <HomeIcon size={20} />
+            <span className="text-[8px] font-black uppercase tracking-widest">{t('home')}</span>
+          </button>
+          <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="flex flex-col items-center gap-1 text-zinc-500">
+            <Compass size={20} />
+            <span className="text-[8px] font-black uppercase tracking-widest">{t('explore')}</span>
+          </button>
+          <button onClick={() => onNavigate('CUSTOMER_DASHBOARD')} className="flex flex-col items-center gap-1 text-zinc-500">
+            <Wallet size={20} />
+            <span className="text-[8px] font-black uppercase tracking-widest">{t('wallet')}</span>
+          </button>
+          <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="flex flex-col items-center gap-1 text-zinc-500">
+            <ShoppingCart size={20} />
+            <span className="text-[8px] font-black uppercase tracking-widest">{t('cart')}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Policy Modal */}
+      {showPolicy && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+          <div className="bg-zinc-900 border border-white/10 rounded-[2.5rem] w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <h3 className="text-lg font-black uppercase tracking-widest">{showPolicy}</h3>
+              <button onClick={() => setShowPolicy(null)} className="p-2 hover:bg-white/5 rounded-full transition-all">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-8 overflow-y-auto text-xs font-medium text-zinc-400 leading-relaxed space-y-4">
               <p>
-                This is a placeholder for the <strong>{showPolicy}</strong>. In a production environment, this section would contain the full legal text governing the use of EasyPOS services.
+                This is a placeholder for the <strong>{showPolicy}</strong>. In a production environment, this section would contain the full legal text governing the use of Subspace services.
               </p>
               <p>
                 Our commitment to transparency and security is paramount. We ensure that all user data is handled with the highest standards of privacy and that our terms are clear and fair for all business partners and customers.
               </p>
-              <p>
-                For any specific inquiries regarding our policies, please contact our legal department at legal@easypos.node or reach out via our support channels.
-              </p>
-              <div className="pt-8 border-t border-white/5">
-                <button onClick={() => setShowPolicy(null)} className="w-full py-4 bg-brand-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-brand-600 transition-all">
+              <div className="pt-8">
+                <button onClick={() => setShowPolicy(null)} className="w-full py-4 bg-brand-500 text-white rounded-xl font-black uppercase tracking-widest hover:bg-brand-600 transition-all">
                   I Understand
                 </button>
               </div>

@@ -18,6 +18,8 @@ import { VendorPanel } from './components/VendorPanel';
 import { Categories } from './components/Categories';
 import { ShopAccess } from './components/ShopAccess';
 import { CustomerDashboard } from './components/CustomerDashboard';
+import { RoleOverview } from './components/RoleOverview';
+import { ScrollRoll } from './components/ScrollRoll';
 import { AppView, Product, Sale, User, StoreSettings, Language, CartItem, Booking, Category } from './types';
 import { translations } from './translations';
 import { Loader2, Menu, Globe, ChevronLeft, LogOut } from 'lucide-react';
@@ -37,8 +39,8 @@ const App: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('easyPOS_theme') === 'dark');
-  const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('easyPOS_language') as Language) || 'en');
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('subspace_theme') === 'dark');
+  const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('subspace_language') as Language) || 'en');
   const [isSidebarVisible, setIsSidebarVisible] = useState(window.innerWidth >= 1024);
   const [isSyncing, setIsSyncing] = useState(false);
   const [shopCode, setShopCode] = useState<string | null>(null);
@@ -48,17 +50,17 @@ const App: React.FC = () => {
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('easyPOS_theme', 'dark');
+      localStorage.setItem('subspace_theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('easyPOS_theme', 'light');
+      localStorage.setItem('subspace_theme', 'light');
     }
   }, [isDarkMode]);
 
   useEffect(() => {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
-    localStorage.setItem('easyPOS_language', language);
+    localStorage.setItem('subspace_language', language);
   }, [language]);
 
   const handleLogin = (loggedInUser: User) => {
@@ -233,10 +235,10 @@ const App: React.FC = () => {
 
 
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
-    name: 'easyPOS',
+    name: 'Subspace',
     address: 'Main Street, City',
     phone: '+1 234 567 890',
-    email: 'contact@easypos.com',
+    email: 'contact@subspace.com',
     currency: 'USD',
     taxRate: 0,
     logo: 'https://picsum.photos/seed/pos/200/200',
@@ -341,6 +343,26 @@ const App: React.FC = () => {
     setCurrentView(AppView.CUSTOMER_PORTAL);
   };
 
+  const seedDemoProducts = async () => {
+    const demoProducts: Omit<Product, 'id'>[] = [
+      { sku: 'SUB001', name: 'Netflix Premium (1 Month)', costPrice: 10, sellPrice: 14.99, stock: 999, category: 'Entertainment', image: 'https://picsum.photos/seed/netflix/400/400', tags: ['streaming', 'movies', '4k'] },
+      { sku: 'SUB002', name: 'Spotify Family Plan', costPrice: 8, sellPrice: 12.99, stock: 999, category: 'Entertainment', image: 'https://picsum.photos/seed/spotify/400/400', tags: ['music', 'family', 'ad-free'] },
+      { sku: 'SUB003', name: 'YouTube Premium', costPrice: 5, sellPrice: 9.99, stock: 999, category: 'Entertainment', image: 'https://picsum.photos/seed/youtube/400/400', tags: ['video', 'no-ads', 'background-play'] },
+      { sku: 'SUB004', name: 'Canva Pro Annual', costPrice: 50, sellPrice: 119.99, stock: 999, category: 'Design', image: 'https://picsum.photos/seed/canva/400/400', tags: ['design', 'pro', 'templates'] },
+      { sku: 'SUB005', name: 'Zomato Gold (3 Months)', costPrice: 15, sellPrice: 29.99, stock: 999, category: 'Food', image: 'https://picsum.photos/seed/zomato/400/400', tags: ['dining', 'delivery', 'offers'] },
+      { sku: 'SUB006', name: 'Disney+ Hotstar', costPrice: 12, sellPrice: 19.99, stock: 999, category: 'Entertainment', image: 'https://picsum.photos/seed/disney/400/400', tags: ['streaming', 'kids', 'marvel'] },
+    ];
+
+    try {
+      for (const p of demoProducts) {
+        await addDoc(collection(db, 'products'), p);
+      }
+      alert(t('demoProductsAdded'));
+    } catch (error) {
+      console.error("Error seeding demo products:", error);
+    }
+  };
+
   const t = (key: string) => translations[language][key] || key;
 
   if (isAuthChecking) {
@@ -369,6 +391,7 @@ const App: React.FC = () => {
       case AppView.STOCK_CHECK: return t('stockCheck');
       case AppView.PRINT_BARCODE: return t('printBarcode');
       case AppView.CATEGORIES: return t('categoryList');
+      case AppView.ROLE_OVERVIEW: return t('roleOverview');
       default: return 'System';
     }
   };
@@ -401,9 +424,9 @@ const App: React.FC = () => {
             </header>
         )}
         <div className="flex-1 overflow-hidden relative">
-            {currentView === AppView.HOME && <Home language={language} t={t} currentUser={user} onLogout={handleLogout} onLoginRequest={() => setCurrentView(AppView.LOGIN)} storeSettings={storeSettings} onNavigate={navigateTo} products={products} />}
+            {currentView === AppView.HOME && <Home language={language} t={t} currentUser={user} onLogout={handleLogout} onLoginRequest={() => setCurrentView(AppView.LOGIN)} storeSettings={storeSettings} onNavigate={navigateTo} products={products} onSeedDemoProducts={seedDemoProducts} />}
             {currentView === AppView.SHOP_ACCESS && <ShopAccess language={language} t={t} onVerify={handleShopVerify} initialCode={shopCode || ''} />}
-            {currentView === AppView.CUSTOMER_DASHBOARD && user && <CustomerDashboard currentUser={user} language={language} t={t} sales={sales} storeSettings={storeSettings} />}
+            {currentView === AppView.CUSTOMER_DASHBOARD && user && <CustomerDashboard currentUser={user} language={language} t={t} sales={sales} storeSettings={storeSettings} onGoBack={handleGoBack} />}
             {currentView === AppView.CUSTOMER_PORTAL && <CustomerPortal products={products} language={language} t={t} currentUser={user} onLoginRequest={() => navigateTo(AppView.LOGIN)} onLogout={handleLogout} onUpdateAvatar={() => {}} storeSettings={storeSettings} />}
             {currentView === AppView.VENDOR_PANEL && <VendorPanel products={products} sales={sales} users={users} currentUser={user!} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onBulkUpdateProduct={() => {}} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} language={language} t={t} onGoBack={handleGoBack} storeSettings={storeSettings} />}
             {currentView === AppView.POS && <POS products={products} sales={sales} onCheckout={handleCheckout} storeSettings={storeSettings} onViewOrderHistory={() => navigateTo(AppView.ORDERS)} onUpdateStoreSettings={handleUpdateStoreSettings} t={t} language={language} currentUser={user!} onGoBack={handleGoBack} />}
@@ -441,8 +464,10 @@ const App: React.FC = () => {
               language={language} 
               t={t} 
             />}
+            {currentView === AppView.ROLE_OVERVIEW && <RoleOverview language={language} t={t} onGoBack={handleGoBack} />}
         </div>
         {user && !user.role.includes('CUSTOMER') && <ClawdBot products={products} sales={sales} storeSettings={storeSettings} currentUser={user!} language={language} t={t} />}
+        <ScrollRoll />
       </main>
     </div>
   );

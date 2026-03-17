@@ -23,9 +23,9 @@ export const BaileysSetup: React.FC<BaileysSetupProps> = ({ onUpdateStoreSetting
   const [logs, setLogs] = useState<string[]>([]);
 
   useEffect(() => {
-    const savedSession = localStorage.getItem('easyPOS_whatsappSession');
+    const savedSession = localStorage.getItem('Subspace_whatsappSession');
     if (savedSession === 'active') setStatus('connected');
-    addLog('easyPOS Baileys Protocol v5.0.0 Stable Booting...');
+    addLog('Subspace Baileys Protocol v5.0.0 Stable Booting...');
     addLog('Initializing WebSocket Tunnel to WhatsApp Servers...');
   }, []);
 
@@ -37,7 +37,7 @@ export const BaileysSetup: React.FC<BaileysSetupProps> = ({ onUpdateStoreSetting
     addLog('Requesting Multi-Device Session Token...');
     
     setTimeout(async () => {
-      const mockSessionToken = `2@easyPOS-Pro-Stable-${Math.random().toString(36).substring(7)}`;
+      const mockSessionToken = `2@Subspace-Pro-Stable-${Math.random().toString(36).substring(7)}`;
       try {
         const url = await QRCode.toDataURL(mockSessionToken, { 
           margin: 1, 
@@ -96,7 +96,7 @@ export const BaileysSetup: React.FC<BaileysSetupProps> = ({ onUpdateStoreSetting
 
   const simulateSuccess = () => {
     setStatus('connected');
-    localStorage.setItem('easyPOS_whatsappSession', 'active');
+    localStorage.setItem('Subspace_whatsappSession', 'active');
     addLog('SESSION AUTHORIZED: Multi-Device Link Established.');
     addLog('Automatic Re-connect Daemon: Active.');
     onUpdateStoreSettings({ 
@@ -108,7 +108,7 @@ export const BaileysSetup: React.FC<BaileysSetupProps> = ({ onUpdateStoreSetting
 
   const handleReset = () => {
     if (confirm("Disconnect WhatsApp link? This will stop all automated receipt dispatches.")) {
-        localStorage.removeItem('easyPOS_whatsappSession');
+        localStorage.removeItem('Subspace_whatsappSession');
         setStatus('disconnected');
         setQrData('');
         setPairingCode('');
@@ -350,10 +350,10 @@ export const BaileysSetup: React.FC<BaileysSetupProps> = ({ onUpdateStoreSetting
                           <div className="bg-white dark:bg-[#d9fdd3] dark:text-[#111b21] p-6 rounded-3xl rounded-tl-none shadow-xl max-w-[90%] animate-fade-in-left relative border border-black/5">
                               <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
                                 {template
-                                    .replace(/{{storeName}}/g, settings?.name || 'easyPOS')
+                                    .replace(/{{storeName}}/g, settings?.name || 'Subspace')
                                     .replace(/{{orderId}}/g, 'ORD-88234')
                                     .replace(/{{total}}/g, '$125.00')
-                                    .replace(/{{receiptUrl}}/g, 'https://easypos.io/r/5xY9')}
+                                    .replace(/{{receiptUrl}}/g, 'https://subspace.io/r/5xY9')}
                               </p>
                               <span className="text-[9px] text-slate-400 mt-4 block text-right font-black uppercase tracking-widest italic">Stable Protocol v5.0.0</span>
                               <div className="absolute top-0 left-[-12px] w-0 h-0 border-t-[16px] border-t-white dark:border-t-[#d9fdd3] border-l-[16px] border-l-transparent"></div>

@@ -28,6 +28,7 @@ interface CustomerDashboardProps {
   t: (key: string) => string;
   sales: Sale[];
   storeSettings: StoreSettings;
+  onGoBack: () => void;
 }
 
 export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
@@ -35,7 +36,8 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
   language,
   t,
   sales,
-  storeSettings
+  storeSettings,
+  onGoBack
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'wallet' | 'support'>('overview');
 
@@ -93,6 +95,13 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
         {/* Header */}
         <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 sticky top-0 bg-[#0a0a0a]/80 backdrop-blur-md z-40">
           <div className="flex items-center gap-4">
+            <button 
+              onClick={onGoBack}
+              className="p-2 bg-zinc-900 border border-white/10 rounded-xl text-zinc-400 hover:text-white transition-all flex items-center gap-2 group"
+            >
+              <ChevronRight className="rotate-180" size={20} />
+              <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Back</span>
+            </button>
             <h2 className="text-xl font-bold capitalize">{activeTab}</h2>
           </div>
 

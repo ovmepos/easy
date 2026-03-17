@@ -231,7 +231,7 @@ export const Login: React.FC<LoginProps> = ({
                   <LayoutGrid size={72} strokeWidth={2.5} className="animate-pulse hidden md:block" />
               </div>
               <div className="text-left">
-                  <h1 className="text-5xl md:text-7xl font-black text-white italic tracking-tighter uppercase leading-none">EASYPOS</h1>
+                  <h1 className="text-5xl md:text-7xl font-black text-white italic tracking-tighter uppercase leading-none">Subspace</h1>
                   <p className="text-[10px] md:text-[12px] font-black text-slate-500 uppercase tracking-[0.5em] mt-3 opacity-80 italic">Multi-Vendor Terminal</p>
               </div>
           </div>
