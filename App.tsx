@@ -43,8 +43,7 @@ const App: React.FC = () => {
     setUser(loggedInUser);
     if (loggedInUser.role === 'ADMIN') setCurrentView(AppView.POS);
     else if (loggedInUser.role === 'VENDOR') setCurrentView(AppView.VENDOR_PANEL);
-    else if (loggedInUser.role === 'VISITOR' || loggedInUser.role === 'CUSTOMER') setCurrentView(AppView.CUSTOMER_PORTAL);
-    else setCurrentView(AppView.POS);
+    else setCurrentView(AppView.CUSTOMER_PORTAL);
   };
 
   // Firebase Sync
@@ -338,13 +337,13 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-[100svh] overflow-hidden bg-[#111827] font-sans flex-col lg:flex-row transition-colors">
-      {!(user?.role === 'CUSTOMER' || user?.role === 'VISITOR') && (
+      {!user?.role.includes('CUSTOMER') && (
         <div className={`fixed inset-y-0 z-[100] w-72 transform transition-all duration-500 lg:static lg:w-72 lg:translate-x-0 ${isSidebarVisible ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'}`}>
             <Sidebar currentView={currentView} onChangeView={navigateTo} onLogout={handleLogout} currentUser={user!} isOnline={true} isSyncing={isSyncing} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} language={language} toggleLanguage={toggleLanguage} t={t} onClose={() => setIsSidebarVisible(false)} />
         </div>
       )}
-      <main className={`flex-1 overflow-hidden relative flex flex-col bg-[#f8fafc] dark:bg-slate-950 transition-all duration-500 ${!(user?.role === 'CUSTOMER' || user?.role === 'VISITOR') && isSidebarVisible ? 'ltr:lg:rounded-l-[44px] rtl:lg:rounded-r-[44px] shadow-2xl' : ''}`}>
-        {!(user?.role === 'CUSTOMER' || user?.role === 'VISITOR') && currentView !== AppView.LOGIN && (
+      <main className={`flex-1 overflow-hidden relative flex flex-col bg-[#f8fafc] dark:bg-slate-950 transition-all duration-500 ${!user?.role.includes('CUSTOMER') && isSidebarVisible ? 'ltr:lg:rounded-l-[44px] rtl:lg:rounded-r-[44px] shadow-2xl' : ''}`}>
+        {!user?.role.includes('CUSTOMER') && currentView !== AppView.LOGIN && (
             <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50 no-print">
                 <div className="flex items-center gap-4">
                     <button onClick={() => setIsSidebarVisible(!isSidebarVisible)} className="p-2 lg:hidden text-slate-500"><Menu size={24}/></button>
@@ -366,7 +365,7 @@ const App: React.FC = () => {
         <div className="flex-1 overflow-hidden relative">
             {currentView === AppView.CUSTOMER_PORTAL && <CustomerPortal products={products} language={language} t={t} currentUser={user} onLoginRequest={() => navigateTo(AppView.LOGIN)} onLogout={handleLogout} onUpdateAvatar={() => {}} storeSettings={storeSettings} />}
             {currentView === AppView.VENDOR_PANEL && <VendorPanel products={products} sales={sales} users={users} currentUser={user!} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onBulkUpdateProduct={() => {}} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} language={language} t={t} onGoBack={handleGoBack} />}
-            {currentView === AppView.POS && <POS products={products} sales={sales} onCheckout={handleCheckout} storeSettings={storeSettings} onViewOrderHistory={() => navigateTo(AppView.ORDERS)} onUpdateStoreSettings={handleUpdateStoreSettings} t={t} language={language} currentUser={user!} onGoBack={handleGoBack} onLogout={handleLogout} />}
+            {currentView === AppView.POS && <POS products={products} sales={sales} onCheckout={handleCheckout} storeSettings={storeSettings} onViewOrderHistory={() => navigateTo(AppView.ORDERS)} onUpdateStoreSettings={handleUpdateStoreSettings} t={t} language={language} currentUser={user!} onGoBack={handleGoBack} />}
             {currentView === AppView.INVENTORY && <Inventory 
               products={products} 
               categories={categories.map(c => c.name)}
@@ -401,7 +400,7 @@ const App: React.FC = () => {
               t={t} 
             />}
         </div>
-        {!(user?.role === 'CUSTOMER' || user?.role === 'VISITOR') && <ClawdBot products={products} sales={sales} storeSettings={storeSettings} currentUser={user!} language={language} t={t} />}
+        {!user?.role.includes('CUSTOMER') && <ClawdBot products={products} sales={sales} storeSettings={storeSettings} currentUser={user!} language={language} t={t} />}
       </main>
     </div>
   );

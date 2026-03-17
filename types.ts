@@ -24,7 +24,7 @@ export enum AppView {
   VENDOR_REQUESTS = 'VENDOR_REQUESTS'
 }
 
-export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CASHIER' | 'CUSTOMER' | 'VENDOR' | 'VENDOR_STAFF' | 'VISITOR';
+export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CASHIER' | 'CUSTOMER' | 'VENDOR' | 'VENDOR_STAFF';
 export type Language = 'en' | 'ar' | 'hi';
 
 export interface Translations {
