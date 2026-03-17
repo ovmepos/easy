@@ -9,6 +9,7 @@ export interface Category {
 
 export enum AppView {
   LOGIN = 'LOGIN',
+  HOME = 'HOME',
   POS = 'POS',
   INVENTORY = 'INVENTORY',
   CATEGORIES = 'CATEGORIES',

@@ -303,11 +303,11 @@ export const Login: React.FC<LoginProps> = ({
                           <button onClick={() => applyDemoCredentials('VENDOR')} className="py-3 px-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all text-left">
                               <span className="block text-blue-500 mb-0.5">02</span> Vendor
                           </button>
-                          <button onClick={() => applyDemoCredentials('STAFF')} className="py-3 px-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all text-left">
-                              <span className="block text-purple-500 mb-0.5">03</span> Staff
+                          <button onClick={() => applyDemoCredentials('STAFF')} className="py-3 px-4 bg-brand-500/10 hover:bg-brand-500/20 rounded-2xl border border-brand-500/30 text-[9px] font-black uppercase tracking-widest text-brand-400 hover:text-white transition-all text-left shadow-[0_0_20px_rgba(14,165,233,0.1)]">
+                              <span className="block text-brand-500 mb-0.5">03</span> Demo Staff
                           </button>
-                          <button onClick={() => applyDemoCredentials('CUSTOMER')} className="py-3 px-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all text-left">
-                              <span className="block text-emerald-500 mb-0.5">04</span> Visitor
+                          <button onClick={() => applyDemoCredentials('CUSTOMER')} className="py-3 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-2xl border border-emerald-500/30 text-[9px] font-black uppercase tracking-widest text-emerald-400 hover:text-white transition-all text-left shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                              <span className="block text-emerald-500 mb-0.5">04</span> Demo Visitor
                           </button>
                       </div>
                   </div>

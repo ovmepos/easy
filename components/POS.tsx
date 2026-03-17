@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Product, CartItem, StoreSettings, Sale, Language, User, ProductVariant } from '../types';
 import { CURRENCY } from '../constants';
-import { ShoppingCart, Plus, Minus, Search, Image as ImageIcon, X, History, ShoppingBag, DollarSign, CheckCircle, Printer, MessageCircle, CreditCard, Receipt, Eye, ChevronLeft, Calendar, User as UserIcon, Tag, Percent, Contact, Layers, Sparkles, LayoutDashboard, Smartphone } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Search, Image as ImageIcon, X, History, ShoppingBag, DollarSign, CheckCircle, Printer, MessageCircle, CreditCard, Receipt, Eye, ChevronLeft, Calendar, User as UserIcon, Tag, Percent, Contact, Layers, Sparkles, LayoutDashboard, Smartphone, LogOut } from 'lucide-react';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
 import { formatNumber, formatCurrency } from '../utils/format';
@@ -18,6 +18,7 @@ interface POSProps {
   language: Language;
   currentUser: User;
   onGoBack?: () => void;
+  onLogout?: () => void;
 }
 
 export const POS: React.FC<POSProps> = ({ 
@@ -30,7 +31,8 @@ export const POS: React.FC<POSProps> = ({
   t = (k) => k, 
   language, 
   currentUser,
-  onGoBack
+  onGoBack,
+  onLogout
 }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [skuInput, setSkuInput] = useState('');
@@ -252,6 +254,14 @@ export const POS: React.FC<POSProps> = ({
         <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 lg:px-8 lg:py-6 shrink-0 z-30 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-4 flex-1">
+              {onGoBack && (
+                <button 
+                  onClick={onGoBack}
+                  className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-90"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+              )}
               <div className="relative flex-1 group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                 <input 
@@ -271,6 +281,15 @@ export const POS: React.FC<POSProps> = ({
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
+               {onLogout && (
+                 <button 
+                   onClick={onLogout}
+                   className="flex items-center gap-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 px-5 py-3.5 border border-rose-100 dark:border-rose-900/30 rounded-2xl transition-all font-black text-xs uppercase shadow-sm active:scale-95"
+                 >
+                   <LogOut size={18} />
+                   <span className="hidden sm:inline">{t('logout')}</span>
+                 </button>
+               )}
                <button onClick={onViewOrderHistory} className="flex items-center gap-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-white px-5 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl transition-all font-black text-xs uppercase shadow-sm active:scale-95"><History size={18} /> {t('history')}</button>
                <button onClick={() => setIsCartOpen(true)} className="lg:hidden flex items-center gap-2 bg-brand-600 text-white px-5 py-3.5 rounded-2xl transition-all font-black text-xs uppercase shadow-lg active:scale-95"><ShoppingCart size={18} /> {cart.length}</button>
             </div>

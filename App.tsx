@@ -5,6 +5,7 @@ import { POS } from './components/POS';
 import { Inventory } from './components/Inventory';
 import { Reports } from './components/Reports';
 import { Login } from './components/Login';
+import { Home } from './components/Home';
 import { StockCheck } from './components/StockCheck';
 import { Settings } from './components/Settings';
 import { BaileysSetup } from './components/BaileysSetup';
@@ -43,7 +44,7 @@ const App: React.FC = () => {
     setUser(loggedInUser);
     if (loggedInUser.role === 'ADMIN') setCurrentView(AppView.POS);
     else if (loggedInUser.role === 'VENDOR') setCurrentView(AppView.VENDOR_PANEL);
-    else setCurrentView(AppView.CUSTOMER_PORTAL);
+    else setCurrentView(AppView.HOME);
   };
 
   // Firebase Sync
@@ -99,7 +100,7 @@ const App: React.FC = () => {
         await setDoc(doc(db, 'profiles', firebaseUser.uid), userProfile, { merge: true });
         
         if (isAdmin) setCurrentView(AppView.POS);
-        else setCurrentView(AppView.CUSTOMER_PORTAL);
+        else setCurrentView(AppView.HOME);
       } else {
         setUser(null);
         setCurrentView(AppView.LOGIN);
@@ -363,6 +364,7 @@ const App: React.FC = () => {
             </header>
         )}
         <div className="flex-1 overflow-hidden relative">
+            {currentView === AppView.HOME && <Home language={language} t={t} currentUser={user} onLogout={handleLogout} onLoginRequest={() => setCurrentView(AppView.LOGIN)} storeSettings={storeSettings} onNavigate={navigateTo} />}
             {currentView === AppView.CUSTOMER_PORTAL && <CustomerPortal products={products} language={language} t={t} currentUser={user} onLoginRequest={() => navigateTo(AppView.LOGIN)} onLogout={handleLogout} onUpdateAvatar={() => {}} storeSettings={storeSettings} />}
             {currentView === AppView.VENDOR_PANEL && <VendorPanel products={products} sales={sales} users={users} currentUser={user!} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onBulkUpdateProduct={() => {}} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} language={language} t={t} onGoBack={handleGoBack} />}
             {currentView === AppView.POS && <POS products={products} sales={sales} onCheckout={handleCheckout} storeSettings={storeSettings} onViewOrderHistory={() => navigateTo(AppView.ORDERS)} onUpdateStoreSettings={handleUpdateStoreSettings} t={t} language={language} currentUser={user!} onGoBack={handleGoBack} />}
