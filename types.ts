@@ -20,13 +20,15 @@ export enum AppView {
   ORDERS = 'ORDERS',
   PRINT_BARCODE = 'PRINT_BARCODE',
   CUSTOMER_PORTAL = 'CUSTOMER_PORTAL',
+  CUSTOMER_DASHBOARD = 'CUSTOMER_DASHBOARD',
+  SHOP_ACCESS = 'SHOP_ACCESS',
   BOOKINGS = 'BOOKINGS',
   VENDOR_PANEL = 'VENDOR_PANEL',
   VENDOR_REQUESTS = 'VENDOR_REQUESTS'
 }
 
 export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CASHIER' | 'CUSTOMER' | 'VENDOR' | 'VENDOR_STAFF';
-export type Language = 'en' | 'ar' | 'hi';
+export type Language = 'en' | 'ar';
 
 export interface Translations {
   [key: string]: string;
@@ -122,6 +124,7 @@ export interface VendorSettings {
   storeLogo?: string;
   shopPasscode: string;
   customUrlSlug: string;
+  aiIdentityScanEnabled?: boolean;
 }
 
 export interface User {
@@ -135,6 +138,8 @@ export interface User {
   avatar?: string;
   customerAvatar?: string;
   tryOnCache?: Record<string, string>;
+  walletBalance?: number;
+  orderHistory?: any[];
   vendorId?: string; // Links user to their specific business node
   vendorStaffLimit?: number;
   vendorSettings?: VendorSettings;
@@ -156,4 +161,5 @@ export interface StoreSettings {
   cloudflareAiUrl?: string; 
   hackClubAiUrl?: string; 
   visitorAccessCode?: string; 
+  aiIdentityScanEnabled?: boolean;
 }

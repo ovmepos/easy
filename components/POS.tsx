@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Product, CartItem, StoreSettings, Sale, Language, User, ProductVariant } from '../types';
 import { CURRENCY } from '../constants';
-import { ShoppingCart, Plus, Minus, Search, Image as ImageIcon, X, History, ShoppingBag, DollarSign, CheckCircle, Printer, MessageCircle, CreditCard, Receipt, Eye, ChevronLeft, Calendar, User as UserIcon, Tag, Percent, Contact, Layers, Sparkles, LayoutDashboard, Smartphone, LogOut } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Search, Image as ImageIcon, X, History, ShoppingBag, DollarSign, CheckCircle, Printer, MessageCircle, CreditCard, Receipt, Eye, ChevronLeft, Calendar, User as UserIcon, Tag, Percent, Contact, Layers, Sparkles, LayoutDashboard, Smartphone, ShieldCheck, Fingerprint, ScanFace } from 'lucide-react';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
 import { formatNumber, formatCurrency } from '../utils/format';
@@ -18,7 +18,6 @@ interface POSProps {
   language: Language;
   currentUser: User;
   onGoBack?: () => void;
-  onLogout?: () => void;
 }
 
 export const POS: React.FC<POSProps> = ({ 
@@ -31,8 +30,7 @@ export const POS: React.FC<POSProps> = ({
   t = (k) => k, 
   language, 
   currentUser,
-  onGoBack,
-  onLogout
+  onGoBack
 }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [skuInput, setSkuInput] = useState('');
@@ -43,6 +41,14 @@ export const POS: React.FC<POSProps> = ({
   const [invoiceQr, setInvoiceQr] = useState<string>('');
   const [showLivePreview, setShowLivePreview] = useState(false);
   
+  // AI Identity Scan State
+  const [isIdentityVerified, setIsIdentityVerified] = useState(false);
+  const [isScanningIdentity, setIsScanningIdentity] = useState(false);
+  const [identityScanProgress, setIdentityScanProgress] = useState(0);
+  const [showIdentitySuccess, setShowIdentitySuccess] = useState(false);
+
+  const isAiScanEnabled = storeSettings.aiIdentityScanEnabled || currentUser.vendorSettings?.aiIdentityScanEnabled;
+
   // Variant Selection State
   const [selectingVariantProduct, setSelectingVariantProduct] = useState<Product | null>(null);
   const [tempColor, setTempColor] = useState<string | null>(null);
@@ -109,6 +115,25 @@ export const POS: React.FC<POSProps> = ({
       }
     };
   }, [isScanning]);
+
+  const startIdentityScan = () => {
+    setIdentityScanProgress(0);
+    const interval = setInterval(() => {
+        setIdentityScanProgress(prev => {
+            if (prev >= 100) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    setIsScanningIdentity(false);
+                    setIsIdentityVerified(true);
+                    setShowIdentitySuccess(true);
+                    setTimeout(() => setShowIdentitySuccess(false), 2000);
+                }, 500);
+                return 100;
+            }
+            return prev + 2;
+        });
+    }, 50);
+  };
 
   const handleBarcodeScanned = (barcode: string) => {
     const product = products.find(p => p.sku === barcode);
@@ -190,6 +215,13 @@ export const POS: React.FC<POSProps> = ({
 
   const processPayment = async (method: 'CASH' | 'CARD') => {
     if (cart.length === 0) return;
+    
+    if (isAiScanEnabled && !isIdentityVerified) {
+        setIsScanningIdentity(true);
+        startIdentityScan();
+        return;
+    }
+
     const saleId = Date.now().toString();
     const saleData: Sale = { 
       items: [...cart], 
@@ -214,6 +246,7 @@ export const POS: React.FC<POSProps> = ({
     setDiscountValue(0);
     setCustomerName('');
     setCustomerPhone('');
+    setIsIdentityVerified(false);
     
     setShowInvoice(true);
     setIsCartOpen(false);
@@ -254,14 +287,6 @@ export const POS: React.FC<POSProps> = ({
         <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 lg:px-8 lg:py-6 shrink-0 z-30 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-4 flex-1">
-              {onGoBack && (
-                <button 
-                  onClick={onGoBack}
-                  className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-90"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-              )}
               <div className="relative flex-1 group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                 <input 
@@ -281,15 +306,6 @@ export const POS: React.FC<POSProps> = ({
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
-               {onLogout && (
-                 <button 
-                   onClick={onLogout}
-                   className="flex items-center gap-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 px-5 py-3.5 border border-rose-100 dark:border-rose-900/30 rounded-2xl transition-all font-black text-xs uppercase shadow-sm active:scale-95"
-                 >
-                   <LogOut size={18} />
-                   <span className="hidden sm:inline">{t('logout')}</span>
-                 </button>
-               )}
                <button onClick={onViewOrderHistory} className="flex items-center gap-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-white px-5 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl transition-all font-black text-xs uppercase shadow-sm active:scale-95"><History size={18} /> {t('history')}</button>
                <button onClick={() => setIsCartOpen(true)} className="lg:hidden flex items-center gap-2 bg-brand-600 text-white px-5 py-3.5 rounded-2xl transition-all font-black text-xs uppercase shadow-lg active:scale-95"><ShoppingCart size={18} /> {cart.length}</button>
             </div>
@@ -304,17 +320,17 @@ export const POS: React.FC<POSProps> = ({
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar bg-slate-50/50 dark:bg-slate-950">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                 {products.filter(p => (selectedCategory === 'All' || p.category === selectedCategory) && (skuInput === '' || p.name.toLowerCase().includes(skuInput.toLowerCase()) || p.sku.includes(skuInput))).map(product => (
-                <div key={product.id} onClick={() => addToCart(product)} className={`bg-white dark:bg-slate-900 rounded-[2.5rem] p-3 md:p-4 border border-slate-100 dark:border-slate-800 cursor-pointer hover:shadow-2xl transition-all flex flex-col group active:scale-[0.97] ${product.stock <= 0 ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
-                    <div className="relative aspect-square rounded-[1.8rem] overflow-hidden bg-slate-50 dark:bg-slate-800 mb-3 shrink-0">
+                <div key={product.id} onClick={() => addToCart(product)} className={`bg-white dark:bg-slate-900 rounded-[2.5rem] p-3 md:p-4 border border-slate-100 dark:border-slate-800 cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col group active:scale-[0.97] ${product.stock <= 0 ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+                    <div className="relative aspect-square rounded-[1.8rem] overflow-hidden bg-slate-50 dark:bg-slate-800 mb-3 shrink-0 shadow-inner">
                         {product.image ? <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" /> : <div className="w-full h-full flex items-center justify-center text-slate-200"><ImageIcon size={32} /></div>}
-                        {product.hasVariants && <div className="absolute top-2 left-2 bg-brand-600 text-white text-[8px] font-black px-2 py-1 rounded-lg uppercase shadow-lg flex items-center gap-1"><Layers size={10}/> Variants</div>}
-                        {product.stock < 10 && <div className="absolute bottom-2 right-2 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-lg uppercase">Low Stock</div>}
+                        {product.hasVariants && <div className="absolute top-2 left-2 bg-brand-600 text-white text-[8px] font-black px-2 py-1 rounded-lg uppercase shadow-lg flex items-center gap-1 backdrop-blur-md"><Layers size={10}/> Variants</div>}
+                        {product.stock < 10 && <div className="absolute bottom-2 right-2 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-lg uppercase shadow-lg">Low Stock</div>}
                     </div>
                     <div className="flex flex-col flex-1">
-                        <h3 className="font-black text-slate-800 dark:text-slate-100 text-xs md:text-sm leading-tight line-clamp-2 h-8 mb-1 uppercase italic tracking-tighter">{product.name}</h3>
+                        <h3 className="font-black text-slate-800 dark:text-slate-100 text-xs md:text-sm leading-tight line-clamp-2 h-8 mb-1 uppercase italic tracking-tighter group-hover:text-brand-600 transition-colors">{product.name}</h3>
                         <div className="mt-auto flex justify-between items-center">
-                            <div className="text-sm md:text-lg font-black text-brand-600 dark:text-brand-400">{formatCurrency(product.sellPrice, language, CURRENCY)}</div>
-                            <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-xl flex items-center justify-center group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm"><Plus size={18} strokeWidth={3} /></div>
+                            <div className="text-sm md:text-lg font-black text-brand-600 dark:text-brand-400 tracking-tighter">{formatCurrency(product.sellPrice, language, CURRENCY)}</div>
+                            <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-xl flex items-center justify-center group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm group-hover:shadow-lg group-hover:rotate-90"><Plus size={18} strokeWidth={3} /></div>
                         </div>
                     </div>
                 </div>
@@ -327,13 +343,13 @@ export const POS: React.FC<POSProps> = ({
       <div className={`fixed inset-x-0 bottom-0 z-50 lg:static lg:inset-auto lg:z-auto w-full lg:w-[480px] h-[92%] lg:h-full bg-white dark:bg-slate-900 shadow-2xl transition-transform duration-500 transform rounded-t-[40px] lg:rounded-none overflow-hidden flex flex-col ${isCartOpen ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'}`}>
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
-             <div className="bg-brand-600 p-2.5 rounded-xl text-white shadow-lg"><LayoutDashboard size={22} /></div>
+             <div className="bg-brand-600 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/20"><LayoutDashboard size={22} /></div>
              <h2 className="text-xl font-black uppercase tracking-tight dark:text-white italic">easyPOS <span className="text-brand-600">Checkout</span></h2>
           </div>
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setShowLivePreview(!showLivePreview)}
-              className={`p-2.5 rounded-xl transition-all ${showLivePreview ? 'bg-brand-600 text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-800 text-slate-400'}`}
+              className={`p-2.5 rounded-xl transition-all ${showLivePreview ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-slate-100'}`}
               title="Toggle Live Digital Receipt"
             >
               <Eye size={20} />
@@ -345,7 +361,7 @@ export const POS: React.FC<POSProps> = ({
         <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 dark:bg-slate-900/50">
            {showLivePreview && cart.length > 0 ? (
              <div className="p-8 animate-fade-in-up">
-                <div className="bg-white text-slate-900 p-8 rounded-[1rem] shadow-2xl relative font-mono text-xs border-t-[12px] border-brand-500 overflow-hidden">
+                <div className="bg-white text-slate-900 p-8 rounded-[2.5rem] shadow-2xl relative font-mono text-xs border-t-[12px] border-brand-500 overflow-hidden">
                    <div className="absolute inset-x-0 -bottom-3 h-4 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMTAiIHZpZXdCb3g9IjAgMCA0MCAxMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMCAwbDEwIDEwbDEwLTEwbDEwIDEwbDEwLTEwdjEwaC00MHoiIGZpbGw9IndoaXRlIi8+PC9zdmc+')] bg-repeat-x"></div>
                    <div className="text-center mb-6">
                       {storeSettings.logo && (
@@ -388,11 +404,21 @@ export const POS: React.FC<POSProps> = ({
                 </div>
              </div>
            ) : (
-             <div className="p-4 md:p-6 space-y-4">
+             <div className="p-4 md:p-6 space-y-4 h-full">
                 {cart.length === 0 ? (
-                  <div className="h-full py-20 flex flex-col items-center justify-center opacity-20 text-slate-400 space-y-6">
-                    <div className="w-32 h-32 bg-slate-100 dark:bg-slate-800 rounded-[3rem] flex items-center justify-center shadow-inner"><LayoutDashboard size={80} strokeWidth={1} /></div>
-                    <p className="font-black text-[10px] uppercase tracking-[0.5em] italic">easyPOS Terminal Ready</p>
+                  <div className="h-full py-20 flex flex-col items-center justify-center text-slate-400 space-y-8 animate-pulse">
+                    <div className="relative">
+                        <div className="w-40 h-40 bg-slate-100 dark:bg-slate-800 rounded-[4rem] flex items-center justify-center shadow-inner">
+                            <ShoppingCart size={80} strokeWidth={1} className="opacity-20" />
+                        </div>
+                        <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-white dark:bg-slate-900 rounded-2xl shadow-xl flex items-center justify-center border border-slate-100 dark:border-slate-800">
+                            <Plus size={24} className="text-brand-600" />
+                        </div>
+                    </div>
+                    <div className="text-center space-y-2">
+                        <p className="font-black text-[11px] uppercase tracking-[0.6em] italic text-slate-500 dark:text-slate-400">Terminal Ready</p>
+                        <p className="text-[9px] font-bold uppercase tracking-widest opacity-40">Scan or select items to begin</p>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4 animate-fade-in">
@@ -457,6 +483,17 @@ export const POS: React.FC<POSProps> = ({
               <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[2.5rem] space-y-3 border border-slate-100 dark:border-slate-700 shadow-inner">
                   <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]"><span>Gross Subtotal</span><span>{formatCurrency(cartSubtotal, language, CURRENCY)}</span></div>
                   {totalDiscountAmount > 0 && <div className="flex justify-between text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]"><span>Markdown Applied</span><span>-{formatCurrency(totalDiscountAmount, language, CURRENCY)}</span></div>}
+                  {isAiScanEnabled && (
+                      <div className="flex justify-between items-center pt-2">
+                          <span className="text-[9px] font-black text-brand-600 uppercase tracking-widest flex items-center gap-2">
+                              <ShieldCheck size={12} className={isIdentityVerified ? 'text-emerald-500' : 'text-brand-500'} /> 
+                              {t('aiIdentityScan')}
+                          </span>
+                          <span className={`text-[9px] font-black uppercase ${isIdentityVerified ? 'text-emerald-500' : 'text-brand-500 animate-pulse'}`}>
+                              {isIdentityVerified ? 'Verified' : 'Required'}
+                          </span>
+                      </div>
+                  )}
                   <div className="pt-4 mt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-end">
                       <span className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-[0.35em] pb-1 italic leading-none">Net Total</span>
                       <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">{formatCurrency(finalTotal, language, CURRENCY)}</span>
@@ -570,6 +607,49 @@ export const POS: React.FC<POSProps> = ({
               </div>
           </div>
       )}
+      {/* Identity Scan Modal */}
+      {isScanningIdentity && (
+          <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[250] flex flex-col items-center justify-center p-8">
+              <div className="relative w-full max-w-md aspect-square rounded-[4rem] overflow-hidden border-4 border-brand-500 shadow-[0_0_150px_rgba(14,165,233,0.4)] bg-slate-900 flex items-center justify-center">
+                  <div className="absolute inset-0 opacity-20">
+                      <video ref={videoRef} className="w-full h-full object-cover grayscale" playsInline />
+                  </div>
+                  <div className="relative z-10 flex flex-col items-center gap-8">
+                      <div className="relative">
+                          <ScanFace size={120} className="text-brand-400 animate-pulse" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-32 h-32 border-2 border-brand-500 rounded-full animate-ping opacity-20"></div>
+                          </div>
+                      </div>
+                      <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-brand-500 transition-all duration-300" 
+                            style={{ width: `${identityScanProgress}%` }}
+                          />
+                      </div>
+                      <p className="text-brand-400 font-black uppercase tracking-[0.4em] text-[10px] italic">Biometric Identity Verification</p>
+                  </div>
+                  <div className="absolute inset-0 border-[60px] border-black/60 pointer-events-none"></div>
+                  <div className="absolute top-1/2 left-0 right-0 h-1 bg-brand-500/50 shadow-[0_0_30px_rgba(14,165,233,1)] animate-scan-line"></div>
+              </div>
+              <button 
+                onClick={() => {
+                    setIsScanningIdentity(false);
+                    setIdentityScanProgress(0);
+                }} 
+                className="mt-12 px-12 py-5 bg-white text-slate-900 rounded-[2rem] font-black uppercase tracking-widest text-[10px] shadow-2xl active:scale-95 transition-all"
+              >
+                  Abort Protocol
+              </button>
+          </div>
+      )}
+
+      {showIdentitySuccess && (
+          <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300] bg-emerald-500 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-2xl flex items-center gap-3 animate-bounce">
+              <ShieldCheck size={20} /> Identity Verified Successfully
+          </div>
+      )}
+
       {/* Scanner Modal */}
       {isScanning && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[200] flex flex-col items-center justify-center p-6">

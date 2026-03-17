@@ -16,6 +16,8 @@ import { CustomerPortal } from './components/CustomerPortal';
 import { Bookings } from './components/Bookings';
 import { VendorPanel } from './components/VendorPanel';
 import { Categories } from './components/Categories';
+import { ShopAccess } from './components/ShopAccess';
+import { CustomerDashboard } from './components/CustomerDashboard';
 import { AppView, Product, Sale, User, StoreSettings, Language, CartItem, Booking, Category } from './types';
 import { translations } from './translations';
 import { Loader2, Menu, Globe, ChevronLeft, LogOut } from 'lucide-react';
@@ -39,6 +41,25 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('easyPOS_language') as Language) || 'en');
   const [isSidebarVisible, setIsSidebarVisible] = useState(window.innerWidth >= 1024);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [shopCode, setShopCode] = useState<string | null>(null);
+  const [isShopVerified, setIsShopVerified] = useState(false);
+
+  // Apply theme and language direction
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('easyPOS_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('easyPOS_theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = language;
+    localStorage.setItem('easyPOS_language', language);
+  }, [language]);
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
@@ -49,6 +70,12 @@ const App: React.FC = () => {
 
   // Firebase Sync
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shopParam = urlParams.get('shop');
+    if (shopParam) {
+      setShopCode(shopParam);
+    }
+
     const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
       const prods = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Product));
       setProducts(prods);
@@ -100,10 +127,16 @@ const App: React.FC = () => {
         await setDoc(doc(db, 'profiles', firebaseUser.uid), userProfile, { merge: true });
         
         if (isAdmin) setCurrentView(AppView.POS);
+        else if (userProfile.role === 'VENDOR') setCurrentView(AppView.VENDOR_PANEL);
         else setCurrentView(AppView.HOME);
       } else {
         setUser(null);
-        setCurrentView(AppView.LOGIN);
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('shop')) {
+          setCurrentView(AppView.SHOP_ACCESS);
+        } else {
+          setCurrentView(AppView.HOME);
+        }
       }
       setIsAuthChecking(false);
     });
@@ -246,13 +279,11 @@ const App: React.FC = () => {
   };
 
   const toggleLanguage = () => {
-    let newLang: Language;
-    if (language === 'en') newLang = 'ar';
-    else if (language === 'ar') newLang = 'hi';
-    else newLang = 'en';
-    
-    setLanguage(newLang);
-    localStorage.setItem('easyPOS_language', newLang);
+    setLanguage(prev => prev === 'en' ? 'ar' : 'en');
+  };
+
+  const toggleTheme = () => {
+    setIsDarkMode(prev => !prev);
   };
 
   const handleAddUser = async (u: User) => {
@@ -304,17 +335,23 @@ const App: React.FC = () => {
     }
   };
 
+  const handleShopVerify = (code: string) => {
+    setShopCode(code);
+    setIsShopVerified(true);
+    setCurrentView(AppView.CUSTOMER_PORTAL);
+  };
+
   const t = (key: string) => translations[language][key] || key;
 
   if (isAuthChecking) {
       return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><Loader2 className="animate-spin text-brand-500" size={64} strokeWidth={3} /></div>;
   }
 
-  if (!user && currentView !== AppView.CUSTOMER_PORTAL) {
+  if (!user && ![AppView.HOME, AppView.CUSTOMER_PORTAL, AppView.SHOP_ACCESS].includes(currentView)) {
     return (
       <Login 
         onLogin={handleLogin} 
-        users={users} t={t} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} 
+        users={users} t={t} isDarkMode={isDarkMode} toggleTheme={toggleTheme} 
         language={language} toggleLanguage={toggleLanguage} activeVendorId={null}
       />
     );
@@ -338,13 +375,13 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-[100svh] overflow-hidden bg-[#111827] font-sans flex-col lg:flex-row transition-colors">
-      {!user?.role.includes('CUSTOMER') && (
+      {user && !user.role.includes('CUSTOMER') && (
         <div className={`fixed inset-y-0 z-[100] w-72 transform transition-all duration-500 lg:static lg:w-72 lg:translate-x-0 ${isSidebarVisible ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'}`}>
-            <Sidebar currentView={currentView} onChangeView={navigateTo} onLogout={handleLogout} currentUser={user!} isOnline={true} isSyncing={isSyncing} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} language={language} toggleLanguage={toggleLanguage} t={t} onClose={() => setIsSidebarVisible(false)} />
+            <Sidebar currentView={currentView} onChangeView={navigateTo} onLogout={handleLogout} currentUser={user!} isOnline={true} isSyncing={isSyncing} isDarkMode={isDarkMode} toggleTheme={toggleTheme} language={language} toggleLanguage={toggleLanguage} t={t} onClose={() => setIsSidebarVisible(false)} />
         </div>
       )}
-      <main className={`flex-1 overflow-hidden relative flex flex-col bg-[#f8fafc] dark:bg-slate-950 transition-all duration-500 ${!user?.role.includes('CUSTOMER') && isSidebarVisible ? 'ltr:lg:rounded-l-[44px] rtl:lg:rounded-r-[44px] shadow-2xl' : ''}`}>
-        {!user?.role.includes('CUSTOMER') && currentView !== AppView.LOGIN && (
+      <main className={`flex-1 overflow-hidden relative flex flex-col bg-[#f8fafc] dark:bg-slate-950 transition-all duration-500 ${user && !user.role.includes('CUSTOMER') && isSidebarVisible ? 'ltr:lg:rounded-l-[44px] rtl:lg:rounded-r-[44px] shadow-2xl' : ''}`}>
+        {user && !user.role.includes('CUSTOMER') && currentView !== AppView.LOGIN && (
             <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50 no-print">
                 <div className="flex items-center gap-4">
                     <button onClick={() => setIsSidebarVisible(!isSidebarVisible)} className="p-2 lg:hidden text-slate-500"><Menu size={24}/></button>
@@ -364,7 +401,9 @@ const App: React.FC = () => {
             </header>
         )}
         <div className="flex-1 overflow-hidden relative">
-            {currentView === AppView.HOME && <Home language={language} t={t} currentUser={user} onLogout={handleLogout} onLoginRequest={() => setCurrentView(AppView.LOGIN)} storeSettings={storeSettings} onNavigate={navigateTo} />}
+            {currentView === AppView.HOME && <Home language={language} t={t} currentUser={user} onLogout={handleLogout} onLoginRequest={() => setCurrentView(AppView.LOGIN)} storeSettings={storeSettings} onNavigate={navigateTo} products={products} />}
+            {currentView === AppView.SHOP_ACCESS && <ShopAccess language={language} t={t} onVerify={handleShopVerify} initialCode={shopCode || ''} />}
+            {currentView === AppView.CUSTOMER_DASHBOARD && user && <CustomerDashboard currentUser={user} language={language} t={t} sales={sales} />}
             {currentView === AppView.CUSTOMER_PORTAL && <CustomerPortal products={products} language={language} t={t} currentUser={user} onLoginRequest={() => navigateTo(AppView.LOGIN)} onLogout={handleLogout} onUpdateAvatar={() => {}} storeSettings={storeSettings} />}
             {currentView === AppView.VENDOR_PANEL && <VendorPanel products={products} sales={sales} users={users} currentUser={user!} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onBulkUpdateProduct={() => {}} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} language={language} t={t} onGoBack={handleGoBack} />}
             {currentView === AppView.POS && <POS products={products} sales={sales} onCheckout={handleCheckout} storeSettings={storeSettings} onViewOrderHistory={() => navigateTo(AppView.ORDERS)} onUpdateStoreSettings={handleUpdateStoreSettings} t={t} language={language} currentUser={user!} onGoBack={handleGoBack} />}
@@ -382,7 +421,7 @@ const App: React.FC = () => {
             />}
             {currentView === AppView.REPORTS && <Reports sales={sales} products={products} users={users} onGoBack={handleGoBack} language={language} />}
             {currentView === AppView.ORDERS && <Orders sales={sales} onProcessReturn={() => {}} storeSettings={storeSettings} onGoBack={handleGoBack} language={language} />}
-            {currentView === AppView.SETTINGS && <Settings users={users} vendorRequests={[]} products={products} sales={sales} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} onReviewRequest={() => {}} onLogout={handleLogout} currentUser={user!} storeSettings={storeSettings} onUpdateStoreSettings={() => {}} onGoBack={handleGoBack} language={language} toggleLanguage={toggleLanguage} t={t} />}
+            {currentView === AppView.SETTINGS && <Settings users={users} vendorRequests={[]} products={products} sales={sales} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} onReviewRequest={() => {}} onLogout={handleLogout} currentUser={user!} storeSettings={storeSettings} onUpdateStoreSettings={handleUpdateStoreSettings} onGoBack={handleGoBack} language={language} toggleLanguage={toggleLanguage} t={t} />}
             {currentView === AppView.BOOKINGS && <Bookings bookings={bookings} onAddBooking={handleAddBooking} onUpdateBooking={handleUpdateBooking} onDeleteBooking={handleDeleteBooking} onGoBack={handleGoBack} language={language} t={t} />}
             {currentView === AppView.STOCK_CHECK && <StockCheck products={products} onUpdateStock={(id, newStock) => {
               const product = products.find(p => p.id === id);
@@ -402,7 +441,7 @@ const App: React.FC = () => {
               t={t} 
             />}
         </div>
-        {!user?.role.includes('CUSTOMER') && <ClawdBot products={products} sales={sales} storeSettings={storeSettings} currentUser={user!} language={language} t={t} />}
+        {user && !user.role.includes('CUSTOMER') && <ClawdBot products={products} sales={sales} storeSettings={storeSettings} currentUser={user!} language={language} t={t} />}
       </main>
     </div>
   );

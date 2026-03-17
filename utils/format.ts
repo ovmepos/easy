@@ -3,7 +3,7 @@ import { Language } from '../types';
 
 /**
  * Formats numbers into localized strings.
- * Supports English, Arabic, and Hindi localized numerals.
+ * Supports English and Arabic localized numerals.
  */
 export const formatNumber = (
   num: number | string, 
@@ -16,7 +16,6 @@ export const formatNumber = (
   // locale detection logic
   let locale = 'en-US';
   if (lang === 'ar') locale = 'ar-SA-u-nu-arab'; // Arabic numerals
-  if (lang === 'hi') locale = 'hi-IN-u-nu-deva'; // Devanagari (Hindi) numerals
   
   const defaultOptions: Intl.NumberFormatOptions = {
     minimumFractionDigits: options.minimumFractionDigits ?? 0,
@@ -42,7 +41,6 @@ export const formatCurrency = (
   
   // In many Asian/Arabic locales, symbol position varies
   if (lang === 'ar') return `${formattedValue} ${currencySymbol}`;
-  if (lang === 'hi') return `${currencySymbol}${formattedValue}`; // Standard for IN context
   
   return `${currencySymbol}${formattedValue}`;
 };

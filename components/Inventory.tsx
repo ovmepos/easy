@@ -199,7 +199,7 @@ export const Inventory: React.FC<InventoryProps> = ({
             <div className="flex items-center gap-3">
                 <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl">
                     <button onClick={() => setActiveTab('products')} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'products' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-lg' : 'text-slate-400'}`}>Items</button>
-                    {onAddCategory && <button onClick={() => setActiveTab('categories')} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'categories' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-lg' : 'text-slate-400'}`}>Fئات</button>}
+                    {onAddCategory && <button onClick={() => setActiveTab('categories')} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'categories' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-lg' : 'text-slate-400'}`}>{t('categoryList')}</button>}
                 </div>
                 {canAdd && activeTab === 'products' && (
                     <div className="flex items-center gap-3">

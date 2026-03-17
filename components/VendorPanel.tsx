@@ -283,6 +283,22 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
                       <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 ml-1 leading-relaxed">Required for Visitor Portal authentication.</p>
                   </div>
 
+                  <div className="bg-blue-50/50 dark:bg-blue-900/10 p-6 rounded-3xl border border-blue-100 dark:border-blue-900/30 flex items-center justify-between gap-6">
+                      <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-blue-600 shadow-sm"><ShieldCheck size={24}/></div>
+                          <div>
+                              <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">{t('aiIdentityScan')}</h4>
+                              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{t('aiIdentityScanDesc')}</p>
+                          </div>
+                      </div>
+                      <button 
+                        onClick={() => setStoreFormData({...storeFormData, aiIdentityScanEnabled: !storeFormData.aiIdentityScanEnabled})} 
+                        className={`w-14 h-8 rounded-full transition-all relative shrink-0 ${storeFormData.aiIdentityScanEnabled ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}`}
+                      >
+                          <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all ${storeFormData.aiIdentityScanEnabled ? 'right-1' : 'left-1'}`}></div>
+                      </button>
+                  </div>
+
                   <div className="space-y-1">
                       <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('storeAddress')}</label>
                       <div className="relative">

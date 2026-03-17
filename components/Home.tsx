@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
-import { Search, MapPin, ShoppingCart, MessageCircle, Wallet, Compass, Home as HomeIcon, ChevronLeft, ChevronRight, Globe, User as UserIcon, LogOut } from 'lucide-react';
-import { Language, User, StoreSettings } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Search, MapPin, ShoppingCart, MessageCircle, Wallet, Compass, Home as HomeIcon, ChevronLeft, ChevronRight, Globe, User as UserIcon, LogOut, ShieldCheck, Truck, Headphones, Zap } from 'lucide-react';
+import { Language, User, StoreSettings, Product } from '../types';
 
 interface HomeProps {
   language: Language;
@@ -11,6 +11,7 @@ interface HomeProps {
   onLoginRequest: () => void;
   storeSettings: StoreSettings;
   onNavigate: (view: any) => void;
+  products: Product[];
 }
 
 export const Home: React.FC<HomeProps> = ({
@@ -20,69 +21,65 @@ export const Home: React.FC<HomeProps> = ({
   onLogout,
   onLoginRequest,
   storeSettings,
-  onNavigate
+  onNavigate,
+  products
 }) => {
   const [activeBanner, setActiveBanner] = useState(0);
+  const [location, setLocation] = useState<string>(t('detectingLocation'));
+  const [showPolicy, setShowPolicy] = useState<string | null>(null);
+
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            // Using a free reverse geocoding API (BigDataCloud)
+            const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`);
+            const data = await response.json();
+            const locationStr = `${data.city || data.locality}, ${data.principalSubdivision}, ${data.countryName}`;
+            setLocation(locationStr);
+          } catch (error) {
+            console.error("Error fetching location details:", error);
+            setLocation(`${position.coords.latitude.toFixed(2)}, ${position.coords.longitude.toFixed(2)}`);
+          }
+        },
+        (error) => {
+          console.error("Error getting geolocation:", error);
+          setLocation(t('locationAccessDenied'));
+        }
+      );
+    } else {
+      setLocation(t('unknownLocation'));
+    }
+  }, [t]);
 
   const banners = [
     {
       id: 1,
-      title: "Canva Plans at",
-      discount: "92.52%",
-      action: "SUBSCRIBE NOW",
-      color: "from-purple-600 to-blue-500",
-      image: "https://picsum.photos/seed/canva/800/400"
+      title: storeSettings.name || "Welcome to EasyPOS",
+      discount: "New Arrivals",
+      action: "SHOP NOW",
+      color: "from-brand-600 to-indigo-600",
+      image: "https://picsum.photos/seed/shop/800/400"
     },
     {
       id: 2,
-      title: "zomato Gift Card",
-      discount: "3% Discount",
-      action: "BUY NOW",
-      color: "from-red-500 to-orange-400",
-      image: "https://picsum.photos/seed/zomato/800/400"
-    },
-    {
-      id: 3,
-      title: "SUBSPACE PREMIUM",
-      discount: "Looking for upgrade?",
-      action: "BUY NOW",
-      color: "from-zinc-800 to-zinc-900",
-      image: "https://picsum.photos/seed/premium/800/400"
+      title: "Exclusive Offers",
+      discount: "Up to 50% OFF",
+      action: "EXPLORE",
+      color: "from-emerald-600 to-teal-500",
+      image: "https://picsum.photos/seed/offer/800/400"
     }
   ];
 
-  const brands = [
-    { name: 'Flipkart', discount: '2% OFF', icon: 'https://logo.clearbit.com/flipkart.com' },
-    { name: 'Uber', discount: '3% OFF', icon: 'https://logo.clearbit.com/uber.com' },
-    { name: 'Amazon', discount: '4% OFF', icon: 'https://logo.clearbit.com/amazon.com' },
-    { name: 'Swiggy', discount: '3% OFF', icon: 'https://logo.clearbit.com/swiggy.com' },
-    { name: 'SonyLIV', discount: '48% OFF', icon: 'https://logo.clearbit.com/sonyliv.com' },
-    { name: 'Zomato', discount: '6% OFF', icon: 'https://logo.clearbit.com/zomato.com' },
-    { name: 'Zee5', discount: '50% OFF', icon: 'https://logo.clearbit.com/zee5.com' },
-    { name: 'Decathlon', discount: '4% OFF', icon: 'https://logo.clearbit.com/decathlon.com' },
-    { name: 'Myntra', discount: '4.5% OFF', icon: 'https://logo.clearbit.com/myntra.com' },
-    { name: 'Pizza Hut', discount: '10.5% OFF', icon: 'https://logo.clearbit.com/pizzahut.com' },
-    { name: 'Dominos', discount: '6.3% OFF', icon: 'https://logo.clearbit.com/dominos.com' },
-    { name: 'Netflix', discount: '5.5% OFF', icon: 'https://logo.clearbit.com/netflix.com' },
-  ];
+  const categories = Array.from(new Set(products.map(p => p.category))).map(cat => ({
+    name: cat,
+    count: `${products.filter(p => p.category === cat).length} Products`,
+    icon: '📦',
+    color: 'bg-brand-500/10'
+  }));
 
-  const categories = [
-    { name: 'Food', count: '7+ Brands', color: 'bg-orange-100', icon: '🍔' },
-    { name: 'Entertainment', count: '10+ Brands', color: 'bg-purple-100', icon: '🎬' },
-    { name: 'Fashion', count: '6+ Brands', color: 'bg-pink-100', icon: '👗' },
-    { name: 'Home Needs', count: '2+ Brands', color: 'bg-green-100', icon: '🏠' },
-    { name: 'Healthcare', count: '2+ Brands', color: 'bg-blue-100', icon: '🏥' },
-    { name: 'News', count: '2+ Brands', color: 'bg-yellow-100', icon: '📰' },
-  ];
-
-  const subscriptions = [
-    { name: 'Youtube Premium', price: '99', duration: '1 months', available: '2+ Groups', icon: 'https://logo.clearbit.com/youtube.com' },
-    { name: 'TrueCaller Family', price: '497', duration: '1 years', available: '1+ Groups', icon: 'https://logo.clearbit.com/truecaller.com' },
-    { name: 'Netflix Standard', price: '250', duration: '1 months', available: '11+ Groups', icon: 'https://logo.clearbit.com/netflix.com' },
-    { name: 'Netflix Premium', price: '163', duration: '1 months', available: '157+ Groups', icon: 'https://logo.clearbit.com/netflix.com' },
-    { name: 'JioHotstar Premium', price: '233', duration: '3 months', available: '4+ Groups', icon: 'https://logo.clearbit.com/hotstar.com' },
-    { name: 'Prime Video', price: '230', duration: '3 months', available: '31+ Groups', icon: 'https://logo.clearbit.com/primevideo.com' },
-  ];
+  const featuredProducts = products.slice(0, 8);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-brand-500 selection:text-white">
@@ -101,18 +98,18 @@ export const Home: React.FC<HomeProps> = ({
               <MapPin size={14} className="text-brand-500" />
               <div className="flex flex-col">
                 <span className="text-[10px] opacity-50">Delivery in minutes</span>
-                <span className="font-bold text-white">Lucknow, Uttar Pradesh, India</span>
+                <span className="font-bold text-white truncate max-w-[200px]">{location}</span>
               </div>
             </div>
           </div>
 
           <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-zinc-400">
-            <button onClick={() => onNavigate('HOME')} className="text-white flex items-center gap-2"><HomeIcon size={18} /> Home</button>
-            <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="hover:text-white flex items-center gap-2"><Compass size={18} /> Explore</button>
-            <button className="hover:text-white flex items-center gap-2"><Wallet size={18} /> Wallet</button>
-            <button className="hover:text-white flex items-center gap-2"><MessageCircle size={18} /> Chat</button>
+            <button onClick={() => onNavigate('HOME')} className="text-white flex items-center gap-2"><HomeIcon size={18} /> {t('home')}</button>
+            <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="hover:text-white flex items-center gap-2"><Compass size={18} /> {t('explore')}</button>
+            <button onClick={() => onNavigate('CUSTOMER_DASHBOARD')} className="hover:text-white flex items-center gap-2"><Wallet size={18} /> {t('wallet')}</button>
+            <button onClick={() => onNavigate('CUSTOMER_DASHBOARD')} className="hover:text-white flex items-center gap-2"><MessageCircle size={18} /> {t('chat')}</button>
             <button className="hover:text-white flex items-center gap-2 relative">
-              <ShoppingCart size={18} /> Cart
+              <ShoppingCart size={18} /> {t('cart')}
               <span className="absolute -top-2 -right-2 w-4 h-4 bg-brand-500 text-white text-[10px] rounded-full flex items-center justify-center">0</span>
             </button>
           </nav>
@@ -127,8 +124,8 @@ export const Home: React.FC<HomeProps> = ({
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-white/5">
-              EN <Globe size={14} />
+            <button className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-white/5 uppercase">
+              {language} <Globe size={14} />
             </button>
             {currentUser ? (
               <div className="flex items-center gap-3">
@@ -148,7 +145,7 @@ export const Home: React.FC<HomeProps> = ({
         </div>
       </header>
 
-      <main className="max-w-screen-2xl mx-auto px-4 lg:px-8 py-8 space-y-12">
+      <main className="max-w-screen-2xl mx-auto px-4 lg:px-8 py-8 space-y-16">
         {/* Carousel */}
         <div className="relative group">
           <div className="flex gap-4 overflow-hidden rounded-3xl">
@@ -195,28 +192,30 @@ export const Home: React.FC<HomeProps> = ({
           </div>
         </div>
 
-        {/* Favourite Brands */}
-        <section>
-          <h3 className="text-xl font-bold mb-6">Favourite Brands</h3>
-          <div className="flex gap-6 overflow-x-auto no-scrollbar pb-4">
-            {brands.map((brand, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-3 min-w-[80px] group cursor-pointer">
-                <div className="w-16 h-16 rounded-full bg-zinc-900 border border-white/5 p-3 group-hover:border-brand-500 transition-all">
-                  <img src={brand.icon} alt={brand.name} className="w-full h-full object-contain rounded-full" />
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase">{brand.name}</p>
-                  <p className="text-[10px] font-black text-brand-500">{brand.discount}</p>
-                </div>
+        {/* Features Section */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {[
+            { icon: <Truck className="text-brand-500" />, title: "Fast Delivery", desc: "Get your orders in record time" },
+            { icon: <ShieldCheck className="text-brand-500" />, title: "Secure Payments", desc: "100% protected transactions" },
+            { icon: <Zap className="text-brand-500" />, title: "Best Quality", desc: "Handpicked premium products" },
+            { icon: <Headphones className="text-brand-500" />, title: "24/7 Support", desc: "Always here to help you" }
+          ].map((feature, idx) => (
+            <div key={idx} className="flex items-center gap-4 p-6 bg-zinc-900/30 rounded-2xl border border-white/5">
+              <div className="w-12 h-12 bg-zinc-900 rounded-xl flex items-center justify-center">
+                {feature.icon}
               </div>
-            ))}
-          </div>
+              <div>
+                <h4 className="font-bold text-sm">{feature.title}</h4>
+                <p className="text-[10px] text-zinc-500">{feature.desc}</p>
+              </div>
+            </div>
+          ))}
         </section>
 
-        {/* Gift Cards */}
+        {/* Categories */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold">Gift Cards</h3>
+            <h3 className="text-xl font-bold">Shop by Category</h3>
             <button className="text-brand-500 text-xs font-bold hover:underline">View All</button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -234,42 +233,66 @@ export const Home: React.FC<HomeProps> = ({
           </div>
         </section>
 
-        {/* Shared Subscriptions */}
+        {/* Featured Products */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold">Shared Subscriptions</h3>
-            <button className="text-brand-500 text-xs font-bold hover:underline">View All</button>
+            <h3 className="text-xl font-bold">Featured Products</h3>
+            <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="text-brand-500 text-xs font-bold hover:underline">View All</button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {subscriptions.map((sub, idx) => (
-              <div key={idx} className="bg-zinc-900/50 border border-white/5 rounded-3xl p-6 hover:bg-zinc-900 transition-all group cursor-pointer">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-black p-2">
-                    <img src={sub.icon} alt={sub.name} className="w-full h-full object-contain" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm">{sub.name}</h4>
-                    <p className="text-[10px] text-zinc-500">Sharing with others</p>
-                  </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredProducts.map((product, idx) => (
+              <div key={idx} className="bg-zinc-900/50 border border-white/5 rounded-3xl p-4 hover:bg-zinc-900 transition-all group cursor-pointer">
+                <div className="aspect-square rounded-2xl bg-zinc-800 mb-4 overflow-hidden relative">
+                  {product.image ? (
+                    <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-zinc-700">📦</div>
+                  )}
+                  <div className="absolute top-2 right-2 px-2 py-1 bg-brand-500 text-[8px] font-black rounded-lg uppercase tracking-widest">New</div>
                 </div>
-                
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-2xl font-black">₹{sub.price}</span>
-                  <span className="text-[10px] text-zinc-500">/device</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 text-[10px] font-bold">
-                  <div className="space-y-1">
-                    <p className="text-zinc-500 uppercase">Duration</p>
-                    <p className="bg-zinc-800 px-2 py-1 rounded-md w-fit">{sub.duration}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-zinc-500 uppercase">Available</p>
-                    <p className="bg-zinc-800 px-2 py-1 rounded-md w-fit">{sub.available}</p>
+                <div className="space-y-1">
+                  <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{product.category}</p>
+                  <h4 className="font-bold text-sm truncate">{product.name}</h4>
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-lg font-black text-brand-500">₹{product.sellPrice}</span>
+                    <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all">
+                      +
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* About Section */}
+        <section className="bg-zinc-900/50 border border-white/5 rounded-[40px] p-8 lg:p-16 flex flex-col lg:flex-row items-center gap-12">
+          <div className="flex-1 space-y-6">
+            <div className="inline-block px-4 py-1.5 bg-brand-500/10 border border-brand-500/20 rounded-full text-brand-500 text-[10px] font-black uppercase tracking-widest">
+              {t('ourMission')}
+            </div>
+            <h2 className="text-3xl lg:text-5xl font-black leading-tight">
+              Revolutionizing Retail with <span className="text-brand-500">Intelligence</span>
+            </h2>
+            <p className="text-sm text-zinc-400 leading-relaxed max-w-xl">
+              EasyPOS is not just a point of sale; it's a complete ecosystem designed to empower small and medium businesses. From AI-driven inventory insights to seamless customer engagement, we provide the tools you need to scale in the modern digital economy.
+            </p>
+            <div className="flex gap-4">
+              <button className="px-8 py-3 bg-brand-500 text-white rounded-full text-xs font-black hover:bg-brand-600 transition-all">
+                {t('getStarted')}
+              </button>
+              <button className="px-8 py-3 bg-white/5 border border-white/10 text-white rounded-full text-xs font-black hover:bg-white/10 transition-all">
+                {t('aboutUs')}
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 grid grid-cols-2 gap-4 w-full">
+            <div className="aspect-square bg-brand-500 rounded-3xl overflow-hidden">
+               <img src="https://picsum.photos/seed/tech1/400/400" alt="" className="w-full h-full object-cover mix-blend-overlay opacity-50" />
+            </div>
+            <div className="aspect-square bg-zinc-800 rounded-3xl overflow-hidden mt-8">
+               <img src="https://picsum.photos/seed/tech2/400/400" alt="" className="w-full h-full object-cover opacity-50" />
+            </div>
           </div>
         </section>
       </main>
@@ -285,26 +308,32 @@ export const Home: React.FC<HomeProps> = ({
               <span className="text-xl font-bold tracking-tighter">easyPOS</span>
             </div>
             <p className="text-xs text-zinc-500 leading-relaxed">
-              © 2026 easyPOS. All rights reserved. Professional Point of Sale and Subscription Management System.
+              {t('copyright')} {t('poweredBy')}
             </p>
+            <div className="flex gap-4 text-zinc-500">
+              <button className="hover:text-white transition-colors">LinkedIn</button>
+              <button className="hover:text-white transition-colors">Instagram</button>
+              <button className="hover:text-white transition-colors">Facebook</button>
+            </div>
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-bold text-sm">Legal</h4>
+            <h4 className="font-bold text-sm">{t('legal')}</h4>
             <ul className="text-xs text-zinc-500 space-y-3">
-              <li className="hover:text-white cursor-pointer">Privacy Policy</li>
-              <li className="hover:text-white cursor-pointer">Terms of Service</li>
-              <li className="hover:text-white cursor-pointer">Refund Policy</li>
+              <li onClick={() => setShowPolicy(t('privacyPolicy'))} className="hover:text-white cursor-pointer">{t('privacyPolicy')}</li>
+              <li onClick={() => setShowPolicy(t('termsConditions'))} className="hover:text-white cursor-pointer">{t('termsConditions')}</li>
+              <li onClick={() => setShowPolicy(t('refundPolicy'))} className="hover:text-white cursor-pointer">{t('refundPolicy')}</li>
               <li className="hover:text-white cursor-pointer">Shipping Policy</li>
             </ul>
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-bold text-sm">Company</h4>
+            <h4 className="font-bold text-sm">{t('company')}</h4>
             <ul className="text-xs text-zinc-500 space-y-3">
-              <li className="hover:text-white cursor-pointer">About Us</li>
-              <li className="hover:text-white cursor-pointer">Contact Us</li>
-              <li className="hover:text-white cursor-pointer">Blogs</li>
+              <li onClick={() => setShowPolicy(t('aboutUs'))} className="hover:text-white cursor-pointer">{t('aboutUs')}</li>
+              <li onClick={() => setShowPolicy(t('contactUs'))} className="hover:text-white cursor-pointer">{t('contactUs')}</li>
+              <li className="hover:text-white cursor-pointer">{t('services')}</li>
+              <li className="hover:text-white cursor-pointer">{t('support')}</li>
             </ul>
           </div>
 
@@ -318,19 +347,46 @@ export const Home: React.FC<HomeProps> = ({
         </div>
         
         <div className="max-w-screen-2xl mx-auto pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex gap-6 text-zinc-500">
-            <button className="hover:text-white transition-colors">LinkedIn</button>
-            <button className="hover:text-white transition-colors">Instagram</button>
-            <button className="hover:text-white transition-colors">Facebook</button>
-            <button className="hover:text-white transition-colors">X</button>
-          </div>
           <div className="flex items-center gap-4 bg-zinc-900/50 border border-white/10 rounded-full px-4 py-2">
             <span className="text-[10px] font-bold text-zinc-400">Suggest a Subscription!</span>
             <input type="text" placeholder="Submit Your Favourite" className="bg-transparent text-[10px] outline-none w-40" />
             <button className="bg-brand-500 p-1.5 rounded-full"><ChevronRight size={14} /></button>
           </div>
+          <div className="text-[10px] text-zinc-500">
+            Current Location: <span className="text-brand-500 font-bold">{location}</span>
+          </div>
         </div>
       </footer>
+
+      {/* Policy Modal */}
+      {showPolicy && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-white/10 rounded-[32px] w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <h3 className="text-xl font-bold">{showPolicy}</h3>
+              <button onClick={() => setShowPolicy(null)} className="p-2 hover:bg-white/5 rounded-full transition-all">
+                <LogOut size={20} className="rotate-180" />
+              </button>
+            </div>
+            <div className="p-8 overflow-y-auto text-sm text-zinc-400 leading-relaxed space-y-4">
+              <p>
+                This is a placeholder for the <strong>{showPolicy}</strong>. In a production environment, this section would contain the full legal text governing the use of EasyPOS services.
+              </p>
+              <p>
+                Our commitment to transparency and security is paramount. We ensure that all user data is handled with the highest standards of privacy and that our terms are clear and fair for all business partners and customers.
+              </p>
+              <p>
+                For any specific inquiries regarding our policies, please contact our legal department at legal@easypos.node or reach out via our support channels.
+              </p>
+              <div className="pt-8 border-t border-white/5">
+                <button onClick={() => setShowPolicy(null)} className="w-full py-4 bg-brand-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-brand-600 transition-all">
+                  I Understand
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

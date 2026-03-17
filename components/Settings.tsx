@@ -176,6 +176,15 @@ export const Settings: React.FC<SettingsProps> = ({
                             </div>
                         </div>
                     )}
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-black dark:text-white uppercase">{t('aiIdentityScan')}</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t('aiIdentityScanDesc')}</p>
+                        </div>
+                        <button onClick={() => onUpdateStoreSettings({...storeSettings, aiIdentityScanEnabled: !storeSettings.aiIdentityScanEnabled})} className={`w-14 h-8 rounded-full transition-all relative ${storeSettings.aiIdentityScanEnabled ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                            <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all ${storeSettings.aiIdentityScanEnabled ? 'right-1' : 'left-1'}`}></div>
+                        </button>
+                    </div>
                     <div className="pt-4 border-t border-slate-50 dark:border-slate-800">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Receipt Footer Message</label>
                         <input type="text" value={storeSettings.footerMessage} onChange={e => onUpdateStoreSettings({...storeSettings, footerMessage: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white text-xs" />
@@ -335,6 +344,24 @@ export const Settings: React.FC<SettingsProps> = ({
                               <div className="space-y-1">
                                   <label className="text-[9px] font-black text-blue-400 uppercase tracking-widest ml-1">Static Node ID (Leave blank to auto-gen)</label>
                                   <input type="text" value={userFormData.vendorId} onChange={e => setUserFormData({...userFormData, vendorId: e.target.value.toUpperCase()})} className="w-full p-3 bg-white dark:bg-slate-800 rounded-xl font-mono text-sm dark:text-white border border-blue-100 outline-none" placeholder="VND-XXXXXX" />
+                              </div>
+                              <div className="flex items-center justify-between pt-2">
+                                  <div>
+                                      <p className="text-[10px] font-black text-blue-600 uppercase">{t('aiIdentityScan')}</p>
+                                      <p className="text-[8px] font-bold text-blue-400 uppercase tracking-widest">Biometric Node Security</p>
+                                  </div>
+                                  <button 
+                                    onClick={() => setUserFormData({
+                                        ...userFormData, 
+                                        vendorSettings: {
+                                            ...(userFormData.vendorSettings || { storeName: userFormData.name || '', storeAddress: '', shopPasscode: '2026', customUrlSlug: '' }),
+                                            aiIdentityScanEnabled: !userFormData.vendorSettings?.aiIdentityScanEnabled
+                                        }
+                                    })} 
+                                    className={`w-12 h-6 rounded-full transition-all relative ${userFormData.vendorSettings?.aiIdentityScanEnabled ? 'bg-blue-600' : 'bg-blue-200 dark:bg-slate-700'}`}
+                                  >
+                                      <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-all ${userFormData.vendorSettings?.aiIdentityScanEnabled ? 'right-0.5' : 'left-0.5'}`}></div>
+                                  </button>
                               </div>
                           </div>
                       )}
