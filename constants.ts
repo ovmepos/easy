@@ -3,6 +3,16 @@ import { Product, User } from './types';
 
 export const CURRENCY = '$';
 
+export const SUPPORTED_CURRENCIES = [
+  { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'SAR', symbol: 'SR', name: 'Saudi Riyal' },
+  { code: 'AED', symbol: 'DH', name: 'UAE Dirham' },
+  { code: 'KWD', symbol: 'KD', name: 'Kuwaiti Dinar' },
+  { code: 'BHD', symbol: 'BD', name: 'Bahraini Dinar' },
+  { code: 'OMR', symbol: 'OR', name: 'Omani Rial' },
+  { code: 'QAR', symbol: 'QR', name: 'Qatari Riyal' },
+];
+
 export const INITIAL_PRODUCTS: Product[] = [
   // --- APPAREL / CLOTHING ---
   {

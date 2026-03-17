@@ -71,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <div className="w-full bg-[#0f172a] dark:bg-[#020617] text-slate-200 flex flex-col h-full shadow-2xl no-print border-r border-slate-800/50 transition-all duration-300">
       {/* Brand Header */}
       <div className="p-6 pb-8 flex justify-between items-center shrink-0">
-        <div className="flex items-center gap-3.5 group cursor-pointer">
+        <div onClick={() => onChangeView(AppView.HOME)} className="flex items-center gap-3.5 group cursor-pointer">
            <div className="bg-brand-500 p-2.5 rounded-2xl shadow-lg shadow-brand-500/20 transform group-hover:rotate-12 group-hover:scale-110 transition-all duration-300">
               <LayoutDashboard size={24} className="text-white" />
            </div>

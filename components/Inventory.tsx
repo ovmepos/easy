@@ -248,7 +248,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                           <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">SKU: {p.sku}</div>
                           <div className="flex justify-between items-end pt-4 mt-auto border-t border-slate-50 dark:border-slate-800">
                              <div>
-                                <p className="text-xl font-black text-brand-600 dark:text-brand-400">{formatCurrency(p.sellPrice, language, CURRENCY)}</p>
+                                <p className="text-xl font-black text-brand-600 dark:text-brand-400">{formatCurrency(p.sellPrice, language, storeSettings?.currency || 'USD')}</p>
                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t('stock')}: {formatNumber(p.stock, language)}</p>
                              </div>
                              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all"><Edit2 size={16}/></div>

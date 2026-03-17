@@ -80,7 +80,7 @@ export const Orders: React.FC<OrdersProps> = ({ sales, onProcessReturn, storeSet
     const refundAmount = calculateRefundTotal();
     if (refundAmount <= 0) return;
     
-    if (window.confirm(`Confirm refund of ${formatCurrency(refundAmount, language, CURRENCY)}?`)) {
+    if (window.confirm(`Confirm refund of ${formatCurrency(refundAmount, language, storeSettings?.currency || 'USD')}?`)) {
         const refundItems = Object.entries(returnDraft).map(([itemId, qty]) => {
             const item = selectedSale.items.find(i => i.id === itemId)!;
             return { name: item.name, price: item.sellPrice, qty };
@@ -151,7 +151,7 @@ export const Orders: React.FC<OrdersProps> = ({ sales, onProcessReturn, storeSet
                         {sale.status || 'COMPLETED'}
                       </span>
                    </td>
-                   <td className="p-6 text-right font-black text-slate-900 dark:text-white text-lg">{formatCurrency(sale.total, language, CURRENCY)}</td>
+                   <td className="p-6 text-right font-black text-slate-900 dark:text-white text-lg">{formatCurrency(sale.total, language, storeSettings?.currency || 'USD')}</td>
                    <td className="p-6 text-center">
                       <button onClick={() => handleOpenDetail(sale)} className="p-3 bg-brand-500/10 text-brand-600 rounded-xl hover:bg-brand-500 hover:text-white transition-all"><Eye size={18} /></button>
                    </td>
@@ -188,7 +188,7 @@ export const Orders: React.FC<OrdersProps> = ({ sales, onProcessReturn, storeSet
                    {refundData.items.map((item, idx) => (
                      <div key={idx} className="flex justify-between items-start">
                         <span className="flex-1 pr-4">{item.name} <span className="text-[10px] text-slate-400 block mt-0.5">x{formatNumber(item.qty, language)}</span></span>
-                        <span className="font-bold text-red-600">-{formatCurrency(item.price * item.qty, language, CURRENCY)}</span>
+                        <span className="font-bold text-red-600">-{formatCurrency(item.price * item.qty, language, storeSettings?.currency || 'USD')}</span>
                      </div>
                    ))}
                 </div>
@@ -196,7 +196,7 @@ export const Orders: React.FC<OrdersProps> = ({ sales, onProcessReturn, storeSet
                 <div className="space-y-4 mb-8">
                     <div className="flex justify-between items-center">
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Refund Amount Paid</span>
-                        <span className="text-4xl font-black tracking-tighter text-red-600">{formatCurrency(refundData.total, language, CURRENCY)}</span>
+                        <span className="text-4xl font-black tracking-tighter text-red-600">{formatCurrency(refundData.total, language, storeSettings?.currency || 'USD')}</span>
                     </div>
                 </div>
 
@@ -249,7 +249,7 @@ export const Orders: React.FC<OrdersProps> = ({ sales, onProcessReturn, storeSet
                            <div className="flex-1">
                               <div className="font-black text-slate-800 dark:text-slate-100 text-sm">{item.name}</div>
                               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                                 {formatCurrency(item.sellPrice, language, CURRENCY)} x {formatNumber(item.quantity, language)}
+                                 {formatCurrency(item.sellPrice, language, storeSettings?.currency || 'USD')} x {formatNumber(item.quantity, language)}
                               </div>
                               {returnedCount > 0 && <div className="text-[9px] font-black text-red-500 uppercase tracking-widest mt-1">[Returned: {formatNumber(returnedCount, language)}]</div>}
                            </div>
@@ -260,7 +260,7 @@ export const Orders: React.FC<OrdersProps> = ({ sales, onProcessReturn, storeSet
                                  <button onClick={() => handleToggleReturn(item.id, remainingQty)} disabled={remainingQty === 0 || pendingReturnQty >= remainingQty} className="w-8 h-8 flex items-center justify-center bg-white dark:bg-slate-700 rounded-lg shadow-sm text-slate-400 disabled:opacity-30"> + </button>
                               </div>
                            ) : (
-                              <div className="text-right font-black text-slate-900 dark:text-white">{formatCurrency(item.sellPrice * item.quantity, language, CURRENCY)}</div>
+                              <div className="text-right font-black text-slate-900 dark:text-white">{formatCurrency(item.sellPrice * item.quantity, language, storeSettings?.currency || 'USD')}</div>
                            )}
                         </div>
                      );
@@ -270,12 +270,12 @@ export const Orders: React.FC<OrdersProps> = ({ sales, onProcessReturn, storeSet
                 <div className="mt-8 pt-8 border-t-2 border-dashed border-slate-100 dark:border-slate-800 space-y-3">
                     <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         <span>Subtotal</span>
-                        <span>{formatCurrency(selectedSale.subTotal, language, CURRENCY)}</span>
+                        <span>{formatCurrency(selectedSale.subTotal, language, storeSettings?.currency || 'USD')}</span>
                     </div>
-                    {selectedSale.discount > 0 && <div className="flex justify-between text-[10px] font-black text-emerald-500 uppercase tracking-widest"><span>Discount</span><span>-{formatCurrency(selectedSale.discount, language, CURRENCY)}</span></div>}
+                    {selectedSale.discount > 0 && <div className="flex justify-between text-[10px] font-black text-emerald-500 uppercase tracking-widest"><span>Discount</span><span>-{formatCurrency(selectedSale.discount, language, storeSettings?.currency || 'USD')}</span></div>}
                     <div className="flex justify-between items-end pt-4 border-t border-slate-50 dark:border-slate-800">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Grand Total</span>
-                        <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">{formatCurrency(selectedSale.total, language, CURRENCY)}</span>
+                        <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">{formatCurrency(selectedSale.total, language, storeSettings?.currency || 'USD')}</span>
                     </div>
                 </div>
             </div>
@@ -284,7 +284,7 @@ export const Orders: React.FC<OrdersProps> = ({ sales, onProcessReturn, storeSet
                {isReturnMode ? (
                   <>
                     <button onClick={() => setIsReturnMode(false)} className="flex-1 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px]">Cancel</button>
-                    <button onClick={submitReturn} disabled={refundTotal <= 0} className="flex-1 py-4 bg-red-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl active:scale-95 disabled:opacity-50 text-[10px]">Refund {formatCurrency(refundTotal, language, CURRENCY)}</button>
+                    <button onClick={submitReturn} disabled={refundTotal <= 0} className="flex-1 py-4 bg-red-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl active:scale-95 disabled:opacity-50 text-[10px]">Refund {formatCurrency(refundTotal, language, storeSettings?.currency || 'USD')}</button>
                   </>
                ) : (
                   <>

@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Product, Language, User, StoreSettings } from '../types';
 import { CURRENCY } from '../constants';
-import { Search, ShoppingBag, User as UserIcon, Sparkles, LogIn, ChevronRight, LayoutGrid, List, Camera, ImageIcon, UserCircle2, Settings2, RefreshCcw, ChevronLeft, LogOut } from 'lucide-react';
+import { Search, ShoppingBag, User as UserIcon, Sparkles, LogIn, ChevronRight, LayoutGrid, List, Camera, ImageIcon, UserCircle2, Settings2, RefreshCcw } from 'lucide-react';
 import { formatCurrency, formatNumber } from '../utils/format';
 import { VirtualTryOn } from './VirtualTryOn';
 import { CustomerBot } from './CustomerBot';
@@ -69,13 +69,6 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
       <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-6 py-6 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={onLogout}
-              className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:text-brand-600 transition-all flex items-center gap-2 group"
-            >
-              <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-              <span className="text-xs font-black uppercase tracking-widest hidden sm:inline">{t('back')}</span>
-            </button>
             <div className="bg-brand-600 p-2.5 rounded-2xl shadow-xl shadow-brand-600/20 rotate-3">
               <ShoppingBag className="text-white" size={24} />
             </div>
@@ -223,7 +216,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
                   )}
                   <div className="flex items-end justify-between mt-auto">
                     <div>
-                      <p className="text-2xl font-black text-brand-600 dark:text-brand-400 tracking-tighter">{formatCurrency(p.sellPrice, language, CURRENCY)}</p>
+                      <p className="text-2xl font-black text-brand-600 dark:text-brand-400 tracking-tighter">{formatCurrency(p.sellPrice, language, storeSettings?.currency || 'USD')}</p>
                     </div>
                     {p.stock <= 5 && (
                       <div className="bg-red-50 dark:bg-red-950/20 px-3 py-1 rounded-full text-[8px] font-black text-red-600 uppercase tracking-widest border border-red-100 dark:border-red-900/30">Limited Stock</div>

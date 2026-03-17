@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Sale, Product, Language, CartItem, User } from '../types';
+import { Sale, Product, Language, CartItem, User, StoreSettings } from '../types';
 import { CURRENCY } from '../constants';
 import { TrendingUp, Sparkles, PieChart, FileText, ChevronLeft, Activity, Target, History, ClipboardList, Loader2, FileSpreadsheet, Calendar as CalendarIcon, ArrowRight, Download, Package, ShoppingBag, BarChart3, Users, Zap, CalendarDays, Wallet, ReceiptText, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { generateBusinessInsight } from '../services/geminiService';
@@ -15,12 +15,13 @@ interface ReportsProps {
   onGoBack?: () => void;
   language: Language;
   users?: User[];
+  storeSettings?: StoreSettings;
 }
 
 type DateRange = 'today' | 'yesterday' | 'last7' | 'month' | 'custom' | 'all';
 type ReportTab = 'FINANCIAL' | 'PRODUCTS' | 'OPERATORS';
 
-export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, language, users = [] }) => {
+export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, language, users = [], storeSettings }) => {
   const [activeTab, setActiveTab] = useState<ReportTab>('FINANCIAL');
   const [insight, setInsight] = useState<string | null>(null);
   const [loadingAi, setLoadingAi] = useState(false);
@@ -122,14 +123,14 @@ export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, lan
       head: [['Metric', 'Value']],
       body: [
         ['Date Range', dateRange.toUpperCase()],
-        ['Gross Revenue', formatCurrency(stats.revenue, language, CURRENCY)],
-        ['Cost of Goods', formatCurrency(stats.cogs, language, CURRENCY)],
-        ['Net Profit', formatCurrency(stats.profit, language, CURRENCY)],
+        ['Gross Revenue', formatCurrency(stats.revenue, language, storeSettings?.currency || 'USD')],
+        ['Cost of Goods', formatCurrency(stats.cogs, language, storeSettings?.currency || 'USD')],
+        ['Net Profit', formatCurrency(stats.profit, language, storeSettings?.currency || 'USD')],
         ['Transaction Count', stats.transactions.toString()],
-        ['Tax Total', formatCurrency(stats.tax, language, CURRENCY)],
-        ['Discounts Issued', formatCurrency(stats.discount, language, CURRENCY)],
-        ['Cash Payments', formatCurrency(stats.cashTotal, language, CURRENCY)],
-        ['Card Payments', formatCurrency(stats.cardTotal, language, CURRENCY)]
+        ['Tax Total', formatCurrency(stats.tax, language, storeSettings?.currency || 'USD')],
+        ['Discounts Issued', formatCurrency(stats.discount, language, storeSettings?.currency || 'USD')],
+        ['Cash Payments', formatCurrency(stats.cashTotal, language, storeSettings?.currency || 'USD')],
+        ['Card Payments', formatCurrency(stats.cardTotal, language, storeSettings?.currency || 'USD')]
       ]
     });
     doc.save(`easyPOS_ZReport_${dateRange}_${Date.now()}.pdf`);
@@ -178,7 +179,7 @@ export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, lan
                     <div className="absolute top-0 right-0 p-8 opacity-10"><CalendarDays size={80} className="text-brand-500" /></div>
                     <div className="relative z-10">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Today's Total Sale</span>
-                        <div className="text-3xl font-black text-slate-900 dark:text-white">{formatCurrency(stats.todayRevenue, language, CURRENCY)}</div>
+                        <div className="text-3xl font-black text-slate-900 dark:text-white">{formatCurrency(stats.todayRevenue, language, storeSettings?.currency || 'USD')}</div>
                         <p className="text-[9px] font-bold text-slate-400 mt-2">{stats.todayCount} Transactions Processed</p>
                     </div>
                 </div>
@@ -186,7 +187,7 @@ export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, lan
                     <div className="absolute top-0 right-0 p-8 opacity-10"><TrendingUp size={80} className="text-emerald-500" /></div>
                     <div className="relative z-10">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Today's Est. Profit</span>
-                        <div className="text-3xl font-black text-emerald-600">{formatCurrency(stats.todayProfit, language, CURRENCY)}</div>
+                        <div className="text-3xl font-black text-emerald-600">{formatCurrency(stats.todayProfit, language, storeSettings?.currency || 'USD')}</div>
                         <div className="flex items-center gap-1 text-emerald-500 mt-2">
                            <ArrowUpRight size={14}/>
                            <span className="text-[9px] font-black uppercase">Margin Target Met</span>
@@ -197,7 +198,7 @@ export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, lan
                     <div className="absolute top-0 right-0 p-8 opacity-10"><ReceiptText size={80} className="text-amber-500" /></div>
                     <div className="relative z-10">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Selected Range Revenue</span>
-                        <div className="text-3xl font-black text-slate-900 dark:text-white">{formatCurrency(stats.revenue, language, CURRENCY)}</div>
+                        <div className="text-3xl font-black text-slate-900 dark:text-white">{formatCurrency(stats.revenue, language, storeSettings?.currency || 'USD')}</div>
                         <p className="text-[9px] font-bold text-slate-400 mt-2">Total Volume for {dateRange.toUpperCase()}</p>
                     </div>
                 </div>
@@ -221,8 +222,8 @@ export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, lan
                                     <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
                                         <td className="p-8 text-xs font-bold dark:text-white">{new Date(s.timestamp).toLocaleString()}</td>
                                         <td className="p-8 font-mono text-xs text-slate-400">#ORD-{s.id.slice(-6)}</td>
-                                        <td className="p-8 text-right font-black text-slate-900 dark:text-white">{formatCurrency(s.total, language, CURRENCY)}</td>
-                                        <td className="p-8 text-right font-black text-emerald-500">+{formatCurrency(s.total - cost, language, CURRENCY)}</td>
+                                        <td className="p-8 text-right font-black text-slate-900 dark:text-white">{formatCurrency(s.total, language, storeSettings?.currency || 'USD')}</td>
+                                        <td className="p-8 text-right font-black text-emerald-500">+{formatCurrency(s.total - cost, language, storeSettings?.currency || 'USD')}</td>
                                     </tr>
                                 );
                               })}
@@ -254,15 +255,15 @@ export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, lan
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                 <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Cash Payments</span>
-                                <span className="text-sm font-black dark:text-white">{formatCurrency(stats.cashTotal, language, CURRENCY)}</span>
+                                <span className="text-sm font-black dark:text-white">{formatCurrency(stats.cashTotal, language, storeSettings?.currency || 'USD')}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Card Payments</span>
-                                <span className="text-sm font-black dark:text-white">{formatCurrency(stats.cardTotal, language, CURRENCY)}</span>
+                                <span className="text-sm font-black dark:text-white">{formatCurrency(stats.cardTotal, language, storeSettings?.currency || 'USD')}</span>
                             </div>
                             <div className="flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-800 text-rose-500">
                                 <span className="text-xs font-bold">Total Discounts issued</span>
-                                <span className="text-sm font-black">-{formatCurrency(stats.discount, language, CURRENCY)}</span>
+                                <span className="text-sm font-black">-{formatCurrency(stats.discount, language, storeSettings?.currency || 'USD')}</span>
                             </div>
                         </div>
                     </div>
@@ -287,8 +288,8 @@ export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, lan
                                     <tr key={p.name} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
                                         <td className="p-8 font-black uppercase italic text-sm dark:text-white">{p.name}</td>
                                         <td className="p-8 text-center font-bold text-slate-400">{p.qty}</td>
-                                        <td className="p-8 text-right font-black text-slate-900 dark:text-white">{formatCurrency(p.revenue, language, CURRENCY)}</td>
-                                        <td className="p-8 text-right font-black text-emerald-500">+{formatCurrency(p.profit, language, CURRENCY)}</td>
+                                        <td className="p-8 text-right font-black text-slate-900 dark:text-white">{formatCurrency(p.revenue, language, storeSettings?.currency || 'USD')}</td>
+                                        <td className="p-8 text-right font-black text-emerald-500">+{formatCurrency(p.profit, language, storeSettings?.currency || 'USD')}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -309,11 +310,11 @@ export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, lan
                             <div className="flex justify-between items-end">
                                 <div>
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Category Revenue</p>
-                                    <p className="text-3xl font-black dark:text-white tracking-tighter">{formatCurrency(cat.revenue, language, CURRENCY)}</p>
+                                    <p className="text-3xl font-black dark:text-white tracking-tighter">{formatCurrency(cat.revenue, language, storeSettings?.currency || 'USD')}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Profit Contribution</p>
-                                    <p className="text-2xl font-black text-emerald-500 tracking-tighter">+{formatCurrency(cat.profit, language, CURRENCY)}</p>
+                                    <p className="text-2xl font-black text-emerald-500 tracking-tighter">+{formatCurrency(cat.profit, language, storeSettings?.currency || 'USD')}</p>
                                 </div>
                             </div>
                         </div>

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, ShoppingCart, MessageCircle, Wallet, Compass, Home as HomeIcon, ChevronLeft, ChevronRight, Globe, User as UserIcon, LogOut, ShieldCheck, Truck, Headphones, Zap } from 'lucide-react';
 import { Language, User, StoreSettings, Product } from '../types';
+import { formatCurrency } from '../utils/format';
 
 interface HomeProps {
   language: Language;
@@ -254,7 +255,7 @@ export const Home: React.FC<HomeProps> = ({
                   <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{product.category}</p>
                   <h4 className="font-bold text-sm truncate">{product.name}</h4>
                   <div className="flex items-center justify-between pt-2">
-                    <span className="text-lg font-black text-brand-500">₹{product.sellPrice}</span>
+                    <span className="text-lg font-black text-brand-500">{formatCurrency(product.sellPrice, language, storeSettings?.currency || 'USD')}</span>
                     <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all">
                       +
                     </button>

@@ -90,7 +90,16 @@ export const translations: Record<Language, Translations> = {
     'legal': 'Legal',
     'detectingLocation': 'Detecting location...',
     'locationAccessDenied': 'Location access denied',
-    'unknownLocation': 'Unknown Location'
+    'unknownLocation': 'Unknown Location',
+    'currency': 'Currency',
+    'selectCurrency': 'Select Currency',
+    'sar': 'Saudi Riyal (SAR)',
+    'aed': 'UAE Dirham (AED)',
+    'kwd': 'Kuwaiti Dinar (KWD)',
+    'bhd': 'Bahraini Dinar (BHD)',
+    'omr': 'Omani Rial (OMR)',
+    'qar': 'Qatari Riyal (QAR)',
+    'usd': 'US Dollar (USD)'
   },
   ar: {
     'back': 'رجوع',
@@ -165,6 +174,15 @@ export const translations: Record<Language, Translations> = {
     'wallet': 'المحفظة',
     'chat': 'المحادثة',
     'cart': 'السلة',
-    'home': 'الرئيسية'
+    'home': 'الرئيسية',
+    'currency': 'العملة',
+    'selectCurrency': 'اختر العملة',
+    'sar': 'ريال سعودي (SAR)',
+    'aed': 'درهم إماراتي (AED)',
+    'kwd': 'دينار كويتي (KWD)',
+    'bhd': 'دينار بحريني (BHD)',
+    'omr': 'ريال عماني (OMR)',
+    'qar': 'ريال قطري (QAR)',
+    'usd': 'دولار أمريكي (USD)'
   }
 };

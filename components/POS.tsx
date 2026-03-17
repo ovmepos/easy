@@ -271,7 +271,7 @@ export const POS: React.FC<POSProps> = ({
     let msg = storeSettings.whatsappTemplate || "Thank you for shopping at *{{storeName}}*. Order #{{orderId}} total is *{{total}}*.";
     msg = msg.replace(/{{storeName}}/g, storeSettings.name)
              .replace(/{{orderId}}/g, lastSale.id.slice(-6))
-             .replace(/{{total}}/g, formatCurrency(lastSale.total, language, CURRENCY));
+             .replace(/{{total}}/g, formatCurrency(lastSale.total, language, storeSettings.currency));
 
     const encodedMsg = encodeURIComponent(msg);
     window.open(`https://wa.me/${cleanPhone}?text=${encodedMsg}`, '_blank');
@@ -329,7 +329,7 @@ export const POS: React.FC<POSProps> = ({
                     <div className="flex flex-col flex-1">
                         <h3 className="font-black text-slate-800 dark:text-slate-100 text-xs md:text-sm leading-tight line-clamp-2 h-8 mb-1 uppercase italic tracking-tighter group-hover:text-brand-600 transition-colors">{product.name}</h3>
                         <div className="mt-auto flex justify-between items-center">
-                            <div className="text-sm md:text-lg font-black text-brand-600 dark:text-brand-400 tracking-tighter">{formatCurrency(product.sellPrice, language, CURRENCY)}</div>
+                            <div className="text-sm md:text-lg font-black text-brand-600 dark:text-brand-400 tracking-tighter">{formatCurrency(product.sellPrice, language, storeSettings.currency)}</div>
                             <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-xl flex items-center justify-center group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm group-hover:shadow-lg group-hover:rotate-90"><Plus size={18} strokeWidth={3} /></div>
                         </div>
                     </div>
@@ -380,25 +380,25 @@ export const POS: React.FC<POSProps> = ({
                             <span className="flex-1 pr-4">
                                {item.name.toUpperCase()}
                                <span className="block opacity-60 text-[9px] mt-0.5">
-                                 {formatNumber(item.quantity, language)} X {formatCurrency(item.sellPrice, language, CURRENCY)}
+                                 {formatNumber(item.quantity, language)} X {formatCurrency(item.sellPrice, language, storeSettings.currency)}
                                  {(item.selectedColor || item.selectedSize) && ` [${item.selectedColor}${item.selectedColor && item.selectedSize ? ', ' : ''}${item.selectedSize}]`}
                                </span>
                             </span>
-                            <span className="font-bold">{formatCurrency(item.sellPrice * item.quantity, language, CURRENCY)}</span>
+                            <span className="font-bold">{formatCurrency(item.sellPrice * item.quantity, language, storeSettings.currency)}</span>
                          </div>
                       ))}
                    </div>
                    <div className="border-t border-dashed border-slate-300 pt-4 space-y-2">
-                      <div className="flex justify-between font-bold"><span>SUBTOTAL:</span><span>{formatCurrency(cartSubtotal, language, CURRENCY)}</span></div>
+                      <div className="flex justify-between font-bold"><span>SUBTOTAL:</span><span>{formatCurrency(cartSubtotal, language, storeSettings.currency)}</span></div>
                       {totalDiscountAmount > 0 && (
                         <div className="flex justify-between text-emerald-600 font-bold">
                             <span>DISCOUNT:</span>
-                            <span>-{formatCurrency(totalDiscountAmount, language, CURRENCY)}</span>
+                            <span>-{formatCurrency(totalDiscountAmount, language, storeSettings.currency)}</span>
                         </div>
                       )}
                       <div className="flex justify-between font-black text-base pt-2 mt-2 border-t border-slate-900">
                           <span>TOTAL DUE:</span>
-                          <span>{formatCurrency(finalTotal, language, CURRENCY)}</span>
+                          <span>{formatCurrency(finalTotal, language, storeSettings.currency)}</span>
                       </div>
                    </div>
                 </div>
@@ -439,7 +439,7 @@ export const POS: React.FC<POSProps> = ({
                               <div className="flex-1 min-w-0">
                                   <p className="font-black text-slate-800 dark:text-slate-100 text-sm truncate uppercase italic tracking-tighter">{item.name}</p>
                                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                    {formatCurrency(item.sellPrice, language, CURRENCY)}
+                                    {formatCurrency(item.sellPrice, language, storeSettings.currency)}
                                     {(item.selectedColor || item.selectedSize) && ` | ${item.selectedColor}${item.selectedColor && item.selectedSize ? ', ' : ''}${item.selectedSize}`}
                                   </p>
                               </div>
@@ -476,13 +476,13 @@ export const POS: React.FC<POSProps> = ({
                         className="w-full p-4 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl outline-none focus:border-brand-500 font-black text-center text-xl dark:text-white"
                         placeholder={`Adjustment amount...`}
                     />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-black">{discountType === 'percent' ? '%' : CURRENCY}</div>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-black">{discountType === 'percent' ? '%' : storeSettings.currency}</div>
                   </div>
               </div>
 
               <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[2.5rem] space-y-3 border border-slate-100 dark:border-slate-700 shadow-inner">
-                  <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]"><span>Gross Subtotal</span><span>{formatCurrency(cartSubtotal, language, CURRENCY)}</span></div>
-                  {totalDiscountAmount > 0 && <div className="flex justify-between text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]"><span>Markdown Applied</span><span>-{formatCurrency(totalDiscountAmount, language, CURRENCY)}</span></div>}
+                  <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]"><span>Gross Subtotal</span><span>{formatCurrency(cartSubtotal, language, storeSettings.currency)}</span></div>
+                  {totalDiscountAmount > 0 && <div className="flex justify-between text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]"><span>Markdown Applied</span><span>-{formatCurrency(totalDiscountAmount, language, storeSettings.currency)}</span></div>}
                   {isAiScanEnabled && (
                       <div className="flex justify-between items-center pt-2">
                           <span className="text-[9px] font-black text-brand-600 uppercase tracking-widest flex items-center gap-2">
@@ -496,7 +496,7 @@ export const POS: React.FC<POSProps> = ({
                   )}
                   <div className="pt-4 mt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-end">
                       <span className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-[0.35em] pb-1 italic leading-none">Net Total</span>
-                      <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">{formatCurrency(finalTotal, language, CURRENCY)}</span>
+                      <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">{formatCurrency(finalTotal, language, storeSettings.currency)}</span>
                   </div>
               </div>
 
@@ -541,13 +541,13 @@ export const POS: React.FC<POSProps> = ({
                           {item.name.toUpperCase()} 
                           {(item.selectedColor || item.selectedSize) && <span className="text-[10px] opacity-70 block">({item.selectedColor}, {item.selectedSize})</span>}
                         </span>
-                        <span className="font-black">{formatCurrency(item.sellPrice * item.quantity, language, CURRENCY)}</span>
+                        <span className="font-black">{formatCurrency(item.sellPrice * item.quantity, language, storeSettings.currency)}</span>
                      </div>
                    ))}
                 </div>
                 <div className="bg-slate-50 p-8 rounded-[2.5rem] space-y-3 mb-10 border border-slate-100 font-mono text-xs shadow-inner">
-                    <div className="flex justify-between opacity-50 uppercase font-black"><span>Subtotal</span><span>{formatCurrency(lastSale.subTotal, language, CURRENCY)}</span></div>
-                    <div className="flex justify-between items-center pt-6 mt-6 border-t-2 border-slate-200 text-xl font-black text-slate-900"><span>Paid Total</span><span>{formatCurrency(lastSale.total, language, CURRENCY)}</span></div>
+                    <div className="flex justify-between opacity-50 uppercase font-black"><span>Subtotal</span><span>{formatCurrency(lastSale.subTotal, language, storeSettings.currency)}</span></div>
+                    <div className="flex justify-between items-center pt-6 mt-6 border-t-2 border-slate-200 text-xl font-black text-slate-900"><span>Paid Total</span><span>{formatCurrency(lastSale.total, language, storeSettings.currency)}</span></div>
                 </div>
                 {invoiceQr && <div className="flex flex-col items-center justify-center mb-10"><img src={invoiceQr} className="w-32 h-32" /></div>}
             </div>

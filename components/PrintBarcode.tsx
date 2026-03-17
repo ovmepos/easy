@@ -150,7 +150,7 @@ export const PrintBarcode: React.FC<PrintBarcodeProps> = ({ products, storeSetti
                   <button key={p.id} onClick={() => { addToQueue(p); setSearchTerm(''); }} className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border-b border-slate-50 dark:border-slate-800 last:border-0 group">
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center font-black text-slate-400 text-xs">{p.sku.slice(-4)}</div>
-                        <div className="text-left"><p className="font-black text-slate-800 dark:text-white text-sm">{p.name}</p><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{formatCurrency(p.sellPrice, language, CURRENCY)}</p></div>
+                        <div className="text-left"><p className="font-black text-slate-800 dark:text-white text-sm">{p.name}</p><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{formatCurrency(p.sellPrice, language, storeSettings?.currency || 'USD')}</p></div>
                     </div>
                     <Plus size={20} className="text-slate-300 group-hover:text-brand-600 transition-colors" />
                   </button>
@@ -252,7 +252,7 @@ export const PrintBarcode: React.FC<PrintBarcodeProps> = ({ products, storeSetti
                         <div className="flex-1 flex items-center justify-center p-2"><img src={previewQr} className="max-h-full max-w-full mix-blend-multiply" /></div>
                         <div className="flex flex-col items-center gap-1">
                             {showSKU && <div className="text-[7px] font-mono font-bold opacity-40">#SKU-SAMPLE-123</div>}
-                            {showPrice && <div className="w-full py-1 text-center font-black text-xs text-white rounded-lg" style={{ backgroundColor: accentColor }}>$149.00</div>}
+                            {showPrice && <div className="w-full py-1 text-center font-black text-xs text-white rounded-lg" style={{ backgroundColor: accentColor }}>{formatCurrency(149, language, storeSettings?.currency || 'USD')}</div>}
                         </div>
                      </div>
                   ) : labelTheme === 'highvis' ? (
@@ -265,7 +265,7 @@ export const PrintBarcode: React.FC<PrintBarcodeProps> = ({ products, storeSetti
                             </div>
                             <div className="w-16 h-16 shrink-0"><img src={previewQr} className="w-full h-full mix-blend-multiply" /></div>
                         </div>
-                        {showPrice && <div className="text-xl font-black text-center mt-1 border-t-2 border-black pt-1" style={{ color: accentColor }}>$149.00</div>}
+                        {showPrice && <div className="text-xl font-black text-center mt-1 border-t-2 border-black pt-1" style={{ color: accentColor }}>{formatCurrency(149, language, storeSettings?.currency || 'USD')}</div>}
                         <div className="text-[6px] font-bold text-center uppercase mt-1 opacity-40 tracking-[0.2em]">{customNote}</div>
                     </div>
                   ) : labelTheme === 'minimal' ? (
@@ -273,7 +273,7 @@ export const PrintBarcode: React.FC<PrintBarcodeProps> = ({ products, storeSetti
                         <div className="w-24 h-24"><img src={previewQr} className="w-full h-full mix-blend-multiply" /></div>
                         <div className="text-center">
                             <div className="text-[10px] font-black uppercase truncate w-32">Sample Item</div>
-                            {showPrice && <div className="text-sm font-black" style={{ color: accentColor }}>$149.00</div>}
+                            {showPrice && <div className="text-sm font-black" style={{ color: accentColor }}>{formatCurrency(149, language, storeSettings?.currency || 'USD')}</div>}
                         </div>
                     </div>
                   ) : (
@@ -283,7 +283,7 @@ export const PrintBarcode: React.FC<PrintBarcodeProps> = ({ products, storeSetti
                         <div className="flex-1 flex items-center justify-center p-1"><img src={previewQr} className="max-h-full mix-blend-multiply" /></div>
                         <div className="flex justify-between items-end border-t-[0.5pt] border-black pt-1">
                             <div className="text-[7px] font-mono">{showSKU ? 'SKU-001' : ''}</div>
-                            {showPrice && <div className="text-xs font-black" style={{ color: accentColor }}>$149.00</div>}
+                            {showPrice && <div className="text-xs font-black" style={{ color: accentColor }}>{formatCurrency(149, language, storeSettings?.currency || 'USD')}</div>}
                         </div>
                     </div>
                   )}
@@ -325,7 +325,7 @@ export const PrintBarcode: React.FC<PrintBarcodeProps> = ({ products, storeSetti
                               <div className="min-w-0">
                                   <h4 className="font-black text-slate-900 dark:text-white truncate uppercase italic text-base">{item.product.name}</h4>
                                   <div className="flex items-center gap-3 mt-1">
-                                    <span className="text-[10px] font-black text-brand-600 uppercase tracking-widest">{formatCurrency(item.product.sellPrice, language, CURRENCY)}</span>
+                                    <span className="text-[10px] font-black text-brand-600 uppercase tracking-widest">{formatCurrency(item.product.sellPrice, language, storeSettings?.currency || 'USD')}</span>
                                     <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                                     <span className="text-[10px] font-mono text-slate-400 uppercase">#{item.product.sku}</span>
                                   </div>
@@ -398,7 +398,7 @@ export const PrintBarcode: React.FC<PrintBarcodeProps> = ({ products, storeSetti
                     </div>
                     <div className="label-footer">
                         <div className="label-sku">{showSKU ? product.sku : ''}</div>
-                        {showPrice && <div className="label-price">{formatCurrency(product.sellPrice, language, CURRENCY)}</div>}
+                        {showPrice && <div className="label-price">{formatCurrency(product.sellPrice, language, storeSettings?.currency || 'USD')}</div>}
                     </div>
                 </div>
              </div>

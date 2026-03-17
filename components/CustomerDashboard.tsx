@@ -18,7 +18,7 @@ import {
   Settings,
   Bell
 } from 'lucide-react';
-import { User, Language, Sale } from '../types';
+import { User, Language, Sale, StoreSettings } from '../types';
 import { formatCurrency } from '../utils/format';
 import { CURRENCY } from '../constants';
 
@@ -27,13 +27,15 @@ interface CustomerDashboardProps {
   language: Language;
   t: (key: string) => string;
   sales: Sale[];
+  storeSettings: StoreSettings;
 }
 
 export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
   currentUser,
   language,
   t,
-  sales
+  sales,
+  storeSettings
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'wallet' | 'support'>('overview');
 
@@ -41,7 +43,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
 
   const stats = [
     { label: 'Total Orders', value: customerOrders.length, icon: Package, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: 'Wallet Balance', value: formatCurrency(currentUser.walletBalance || 0, language, CURRENCY), icon: Wallet, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: 'Wallet Balance', value: formatCurrency(currentUser.walletBalance || 0, language, storeSettings?.currency || 'USD'), icon: Wallet, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
     { label: 'Active Tracks', value: '2', icon: Truck, color: 'text-orange-500', bg: 'bg-orange-500/10' },
   ];
 
@@ -152,7 +154,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-black text-sm">{formatCurrency(order.total, language, CURRENCY)}</p>
+                          <p className="font-black text-sm">{formatCurrency(order.total, language, storeSettings?.currency || 'USD')}</p>
                           <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Completed</p>
                         </div>
                       </div>
@@ -211,7 +213,7 @@ export const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-brand-100/60 text-sm font-bold uppercase tracking-widest mb-2">Available Balance</p>
-                      <h3 className="text-5xl font-black tracking-tighter">{formatCurrency(currentUser.walletBalance || 0, language, CURRENCY)}</h3>
+                      <h3 className="text-5xl font-black tracking-tighter">{formatCurrency(currentUser.walletBalance || 0, language, storeSettings?.currency || 'USD')}</h3>
                     </div>
                     <div className="w-16 h-16 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center">
                       <CreditCard size={32} />

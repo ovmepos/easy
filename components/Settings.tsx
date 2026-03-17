@@ -186,6 +186,22 @@ export const Settings: React.FC<SettingsProps> = ({
                         </button>
                     </div>
                     <div className="pt-4 border-t border-slate-50 dark:border-slate-800">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">{t('currency')}</label>
+                        <select 
+                            value={storeSettings.currency} 
+                            onChange={e => onUpdateStoreSettings({...storeSettings, currency: e.target.value})}
+                            className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-black uppercase text-[10px] tracking-widest dark:text-white outline-none focus:border-brand-500"
+                        >
+                            <option value="$">{t('usd')}</option>
+                            <option value="SR">{t('sar')}</option>
+                            <option value="DH">{t('aed')}</option>
+                            <option value="KD">{t('kwd')}</option>
+                            <option value="BD">{t('bhd')}</option>
+                            <option value="OR">{t('omr')}</option>
+                            <option value="QR">{t('qar')}</option>
+                        </select>
+                    </div>
+                    <div className="pt-4 border-t border-slate-50 dark:border-slate-800">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Receipt Footer Message</label>
                         <input type="text" value={storeSettings.footerMessage} onChange={e => onUpdateStoreSettings({...storeSettings, footerMessage: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white text-xs" />
                     </div>

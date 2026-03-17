@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Product, Sale, User, Language, VendorSettings } from '../types';
+import { Product, Sale, User, Language, VendorSettings, StoreSettings } from '../types';
 import { CURRENCY } from '../constants';
 import { formatCurrency, formatNumber } from '../utils/format';
 import { Package, TrendingUp, DollarSign, Search, Plus, List, ChevronLeft, ArrowUpRight, ShoppingBag, Layers, Users, ShieldCheck, Trash2, Edit2, X, Save, Key, Mail, Store, Cloud, Calendar, RefreshCw, Loader2, Zap, UserCheck, ShieldAlert, MapPin, Type, Copy } from 'lucide-react';
@@ -20,12 +20,13 @@ interface VendorPanelProps {
   onDeleteUser: (id: string) => void;
   language: Language;
   t: (key: string) => string;
+  storeSettings: StoreSettings;
   onGoBack?: () => void;
 }
 
 export const VendorPanel: React.FC<VendorPanelProps> = ({
   products, sales, users, currentUser, onAddProduct, onUpdateProduct, onDeleteProduct, onBulkUpdateProduct, 
-  onAddUser, onUpdateUser, onDeleteUser, language, t, onGoBack
+  onAddUser, onUpdateUser, onDeleteUser, language, t, storeSettings, onGoBack
 }) => {
   const [activeSubView, setActiveSubView] = useState<'DASHBOARD' | 'INVENTORY' | 'TEAM' | 'STORE' | 'BACKUP'>('DASHBOARD');
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
@@ -152,7 +153,7 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
                 <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform"><DollarSign size={64} className="text-emerald-500" /></div>
                 <div className="relative z-10">
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">My Revenue</span>
-                    <div className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-none tracking-tighter">{formatCurrency(mySalesStats.revenue, language, CURRENCY)}</div>
+                    <div className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-none tracking-tighter">{formatCurrency(mySalesStats.revenue, language, storeSettings?.currency || 'USD')}</div>
                 </div>
             </div>
             <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
