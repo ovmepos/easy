@@ -62,7 +62,7 @@ export const ClawdBot: React.FC<ClawdBotProps> = ({ products, sales, storeSettin
   const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
 
   const SUPREME_ID = 'nabeelkhan1007@gmail.com';
-  const isSupremeAdmin = currentUser.email?.toLowerCase() === SUPREME_ID;
+  const isSupremeAdmin = currentUser?.email?.toLowerCase() === SUPREME_ID;
 
   useEffect(() => { if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isOpen, transcription]);
 
@@ -71,7 +71,7 @@ export const ClawdBot: React.FC<ClawdBotProps> = ({ products, sales, storeSettin
       const todaySales = sales.filter(s => s.timestamp >= today);
       const totalRev = todaySales.reduce((a,s)=>a+s.total,0);
       
-      return `You are Subspace Artificial Intelligence (Terminal Protocol v2.5). 
+      return `You are easyPOS Artificial Intelligence (Terminal Protocol v2.5). 
       You are speaking to ${currentUser.name}. 
       ${isSupremeAdmin ? 'IDENTITY VERIFIED: You are speaking to the System Owner. You have full access to solve system problems, provide detailed audit logs, and troubleshoot inventory nodes.' : ''}
       
@@ -93,14 +93,14 @@ export const ClawdBot: React.FC<ClawdBotProps> = ({ products, sales, storeSettin
     if (isVoiceActive) { stopVoiceMode(); return; }
     setIsVoiceConnecting(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       audioContextRef.current = { input: inputCtx, output: outputCtx };
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
       const sessionPromise = ai.live.connect({
-        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+        model: 'gemini-2.5-flash-native-audio-preview-09-2025',
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } } },
@@ -161,7 +161,7 @@ export const ClawdBot: React.FC<ClawdBotProps> = ({ products, sales, storeSettin
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setInput(''); setIsTyping(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: userMsg,
@@ -185,7 +185,7 @@ export const ClawdBot: React.FC<ClawdBotProps> = ({ products, sales, storeSettin
               <div className={`w-12 h-12 rounded-[1.2rem] flex items-center justify-center shadow-lg ${isVoiceActive ? 'bg-emerald-600' : 'bg-brand-600'}`}>
                 {isVoiceActive ? <Waves size={24} className="animate-bounce" /> : <Zap size={24} />}
               </div>
-              <div><h3 className="text-xl font-black italic uppercase tracking-tighter leading-none mb-1.5">Subspace <span className="text-brand-400">AI</span></h3><span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{isVoiceActive ? 'Voice Link Active' : 'System Solver Mode'}</span></div>
+              <div><h3 className="text-xl font-black italic uppercase tracking-tighter leading-none mb-1.5">easyPOS <span className="text-brand-400">AI</span></h3><span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{isVoiceActive ? 'Voice Link Active' : 'System Solver Mode'}</span></div>
             </div>
             <button onClick={() => setIsOpen(false)} className="p-2.5 bg-white/5 rounded-xl hover:bg-red-500/20"><X size={24}/></button>
           </div>

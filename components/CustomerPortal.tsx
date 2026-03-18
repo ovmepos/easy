@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
-import { Product, Language, User, StoreSettings } from '../types';
+import { Product, Language, User, StoreSettings, AppView } from '../types';
 import { CURRENCY } from '../constants';
-import { Search, ShoppingBag, User as UserIcon, Sparkles, LogIn, ChevronRight, LayoutGrid, List, Camera, ImageIcon, UserCircle2, Settings2, RefreshCcw } from 'lucide-react';
+import { Search, ShoppingBag, User as UserIcon, Sparkles, LogIn, ChevronRight, LayoutGrid, List, Camera, ImageIcon, UserCircle2, Settings2, RefreshCcw, Globe, Wallet, Zap } from 'lucide-react';
 import { formatCurrency, formatNumber } from '../utils/format';
 import { VirtualTryOn } from './VirtualTryOn';
 import { CustomerBot } from './CustomerBot';
@@ -16,6 +16,11 @@ interface CustomerPortalProps {
   onLogout: () => void;
   onUpdateAvatar: (data: string, tryOnCache?: Record<string, string>) => void;
   storeSettings: StoreSettings;
+  toggleLanguage: () => void;
+  toggleTheme: () => void;
+  isDarkMode: boolean;
+  onUpdateStoreSettings: (settings: StoreSettings) => void;
+  onNavigate: (view: AppView) => void;
 }
 
 export const CustomerPortal: React.FC<CustomerPortalProps> = ({
@@ -26,7 +31,12 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
   currentUser,
   onLogout,
   onUpdateAvatar,
-  storeSettings
+  storeSettings,
+  toggleLanguage,
+  toggleTheme,
+  isDarkMode,
+  onUpdateStoreSettings,
+  onNavigate
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -45,6 +55,22 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
   }, [products, searchTerm, selectedCategory]);
 
   const needsAvatarSetup = currentUser && !currentUser.customerAvatar && !showAvatarSetup;
+
+  const currencies = [
+    { code: 'USD', symbol: '$' },
+    { code: 'SAR', symbol: 'SR' },
+    { code: 'AED', symbol: 'DH' },
+    { code: 'KWD', symbol: 'KD' },
+    { code: 'BHD', symbol: 'BD' },
+    { code: 'OMR', symbol: 'RO' },
+    { code: 'QAR', symbol: 'QR' }
+  ];
+
+  const toggleCurrency = () => {
+    const currentIndex = currencies.findIndex(c => c.code === storeSettings.currency);
+    const nextIndex = (currentIndex + 1) % currencies.length;
+    onUpdateStoreSettings({ ...storeSettings, currency: currencies[nextIndex].code });
+  };
 
   if (tryOnProduct || needsAvatarSetup || showAvatarSetup) {
     return (
@@ -66,59 +92,83 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors flex flex-col relative">
       {/* Customer Header */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-6 py-6 sticky top-0 z-50">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-6 py-4 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="bg-brand-600 p-2.5 rounded-2xl shadow-xl shadow-brand-600/20 rotate-3">
-              <ShoppingBag className="text-white" size={24} />
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate(AppView.HOME)}>
+              <div className="bg-brand-600 p-2 rounded-xl shadow-lg shadow-brand-600/20">
+                <ShoppingBag className="text-white" size={20} />
+              </div>
+              <h1 className="text-lg font-black italic uppercase tracking-tighter dark:text-white">easyPOS <span className="text-brand-600">Shop</span></h1>
             </div>
-            <div>
-              <h1 className="text-xl font-black italic uppercase tracking-tighter dark:text-white">Subspace <span className="text-brand-600">Shop</span></h1>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">Virtual Showroom</p>
-            </div>
+
+            <nav className="hidden xl:flex items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <button onClick={() => onNavigate(AppView.HOME)} className="hover:text-brand-600 transition-colors">Home</button>
+              <button onClick={() => onNavigate(AppView.CUSTOMER_PORTAL)} className="text-brand-600">Explore</button>
+              <button onClick={() => onNavigate(AppView.CUSTOMER_DASHBOARD)} className="hover:text-brand-600 transition-colors">Wallet</button>
+            </nav>
           </div>
 
           <div className="flex-1 max-w-xl hidden md:block relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-600 transition-colors" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-600 transition-colors" size={16} />
             <input 
               type="text" 
               placeholder={t('searchProducts')} 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-100 dark:bg-slate-800 py-3.5 pl-12 pr-6 rounded-2xl border border-transparent focus:border-brand-500 outline-none transition-all font-bold dark:text-white text-sm"
+              className="w-full bg-slate-100 dark:bg-slate-800 py-2.5 pl-11 pr-6 rounded-xl border border-transparent focus:border-brand-500 outline-none transition-all font-bold dark:text-white text-xs"
             />
           </div>
 
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={toggleLanguage}
+                className="flex items-center gap-1.5 text-[10px] font-black px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-transparent hover:border-brand-500/50 transition-all uppercase tracking-widest"
+              >
+                {language} <Globe size={12} />
+              </button>
+
+              <button 
+                onClick={toggleCurrency}
+                className="flex items-center gap-1.5 text-[10px] font-black px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-transparent hover:border-brand-500/50 transition-all uppercase tracking-widest"
+              >
+                {storeSettings.currency} <Wallet size={12} />
+              </button>
+
+              <button 
+                onClick={toggleTheme}
+                className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-transparent hover:border-brand-500/50 transition-all"
+              >
+                {isDarkMode ? <Zap size={14} className="text-yellow-400" /> : <Zap size={14} className="text-slate-400" />}
+              </button>
+            </div>
+
             {currentUser ? (
               <div className="flex items-center gap-3">
-                <div className="text-right hidden sm:block">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Authenticated</p>
-                  <p className="text-xs font-black dark:text-white">{currentUser.name}</p>
-                </div>
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
                     <button 
                       onClick={() => setShowAvatarSetup(true)}
-                      className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-brand-600 hover:text-brand-400 transition-all active:scale-90 shadow-sm"
+                      className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 flex items-center justify-center text-brand-600 hover:text-brand-400 transition-all active:scale-90 shadow-sm"
                       title="Update AI Avatar"
                     >
-                      <UserCircle2 size={20} />
+                      <UserCircle2 size={16} />
                     </button>
                     <button 
                       onClick={onLogout}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-all active:scale-90"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 transition-all active:scale-90"
                       title="Sign Out"
                     >
-                      <UserIcon size={20} />
+                      <UserIcon size={16} />
                     </button>
                 </div>
               </div>
             ) : (
               <button 
                 onClick={onLoginRequest}
-                className="flex items-center gap-3 px-6 py-3 bg-slate-900 dark:bg-brand-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all italic"
+                className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-brand-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all italic"
               >
-                <LogIn size={18} /> {t('loginWithGoogle')}
+                <LogIn size={16} /> {t('loginWithGoogle')}
               </button>
             )}
           </div>

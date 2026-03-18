@@ -344,7 +344,7 @@ export const POS: React.FC<POSProps> = ({
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
              <div className="bg-brand-600 p-2.5 rounded-xl text-white shadow-lg shadow-brand-500/20"><LayoutDashboard size={22} /></div>
-             <h2 className="text-xl font-black uppercase tracking-tight dark:text-white italic">Subspace <span className="text-brand-600">Checkout</span></h2>
+             <h2 className="text-xl font-black uppercase tracking-tight dark:text-white italic">easyPOS <span className="text-brand-600">Checkout</span></h2>
           </div>
           <div className="flex items-center gap-2">
             <button 
@@ -372,7 +372,7 @@ export const POS: React.FC<POSProps> = ({
                       <p className="font-black text-xl uppercase tracking-tighter">{storeSettings.name}</p>
                       <p className="opacity-60 text-[9px] uppercase tracking-widest leading-relaxed mt-1">{storeSettings.address}</p>
                       <div className="border-b border-dashed border-slate-300 my-4"></div>
-                      <p className="text-[10px] font-black uppercase tracking-widest italic flex items-center justify-center gap-2 text-brand-600"><LayoutDashboard size={12}/> Subspace SECURE DRAFT</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest italic flex items-center justify-center gap-2 text-brand-600"><LayoutDashboard size={12}/> easyPOS SECURE DRAFT</p>
                    </div>
                    <div className="space-y-3 mb-6">
                       {cart.map((item, idx) => (
@@ -504,7 +504,7 @@ export const POS: React.FC<POSProps> = ({
                 <button onClick={() => processPayment('CASH')} className="py-6 bg-slate-900 dark:bg-slate-800 text-white rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-xl active:scale-95 flex items-center justify-center gap-3 transition-all"><DollarSign size={20}/> {t('cash')}</button>
                 <button onClick={() => processPayment('CARD')} className="py-6 bg-brand-600 text-white rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-xl active:scale-95 flex items-center justify-center gap-3 transition-all"><CreditCard size={20}/> {t('card')}</button>
               </div>
-              <p className="text-[8px] text-center font-black text-slate-400 uppercase tracking-[0.4em] italic">Powered by Subspace Enterprise Matrix</p>
+              <p className="text-[8px] text-center font-black text-slate-400 uppercase tracking-[0.4em] italic">Powered by easyPOS Enterprise Matrix</p>
             </div>
           )}
         </div>

@@ -39,8 +39,8 @@ const App: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('subspace_theme') === 'dark');
-  const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('subspace_language') as Language) || 'en');
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('easypos_theme') === 'dark');
+  const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('easypos_language') as Language) || 'en');
   const [isSidebarVisible, setIsSidebarVisible] = useState(window.innerWidth >= 1024);
   const [isSyncing, setIsSyncing] = useState(false);
   const [shopCode, setShopCode] = useState<string | null>(null);
@@ -50,17 +50,17 @@ const App: React.FC = () => {
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('subspace_theme', 'dark');
+      localStorage.setItem('easypos_theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('subspace_theme', 'light');
+      localStorage.setItem('easypos_theme', 'light');
     }
   }, [isDarkMode]);
 
   useEffect(() => {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
-    localStorage.setItem('subspace_language', language);
+    localStorage.setItem('easypos_language', language);
   }, [language]);
 
   const handleLogin = (loggedInUser: User) => {
@@ -235,10 +235,10 @@ const App: React.FC = () => {
 
 
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
-    name: 'Subspace',
+    name: 'easyPOS',
     address: 'Main Street, City',
     phone: '+1 234 567 890',
-    email: 'contact@subspace.com',
+    email: 'support@easypos.io',
     currency: 'USD',
     taxRate: 0,
     logo: 'https://picsum.photos/seed/pos/200/200',
@@ -397,13 +397,13 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-[100svh] overflow-hidden bg-[#111827] font-sans flex-col lg:flex-row transition-colors">
+    <div className="flex min-h-screen bg-[#111827] font-sans flex-col lg:flex-row transition-colors">
       {user && !user.role.includes('CUSTOMER') && (
         <div className={`fixed inset-y-0 z-[100] w-72 transform transition-all duration-500 lg:static lg:w-72 lg:translate-x-0 ${isSidebarVisible ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'}`}>
             <Sidebar currentView={currentView} onChangeView={navigateTo} onLogout={handleLogout} currentUser={user!} isOnline={true} isSyncing={isSyncing} isDarkMode={isDarkMode} toggleTheme={toggleTheme} language={language} toggleLanguage={toggleLanguage} t={t} onClose={() => setIsSidebarVisible(false)} />
         </div>
       )}
-      <main className={`flex-1 overflow-hidden relative flex flex-col bg-[#f8fafc] dark:bg-slate-950 transition-all duration-500 ${user && !user.role.includes('CUSTOMER') && isSidebarVisible ? 'ltr:lg:rounded-l-[44px] rtl:lg:rounded-r-[44px] shadow-2xl' : ''}`}>
+      <main className={`flex-1 relative flex flex-col bg-[#f8fafc] dark:bg-slate-950 transition-all duration-500 ${user && !user.role.includes('CUSTOMER') && isSidebarVisible ? 'ltr:lg:rounded-l-[44px] rtl:lg:rounded-r-[44px] shadow-2xl' : ''}`}>
         {user && !user.role.includes('CUSTOMER') && currentView !== AppView.LOGIN && (
             <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50 no-print">
                 <div className="flex items-center gap-4">
@@ -423,11 +423,11 @@ const App: React.FC = () => {
                 </div>
             </header>
         )}
-        <div className="flex-1 overflow-hidden relative">
-            {currentView === AppView.HOME && <Home language={language} t={t} currentUser={user} onLogout={handleLogout} onLoginRequest={() => setCurrentView(AppView.LOGIN)} storeSettings={storeSettings} onNavigate={navigateTo} products={products} onSeedDemoProducts={seedDemoProducts} />}
+        <div className="flex-1 relative">
+            {currentView === AppView.HOME && <Home language={language} t={t} currentUser={user} onLogout={handleLogout} onLoginRequest={() => setCurrentView(AppView.LOGIN)} storeSettings={storeSettings} onNavigate={navigateTo} products={products} onSeedDemoProducts={seedDemoProducts} toggleLanguage={toggleLanguage} toggleTheme={toggleTheme} isDarkMode={isDarkMode} onUpdateStoreSettings={handleUpdateStoreSettings} />}
             {currentView === AppView.SHOP_ACCESS && <ShopAccess language={language} t={t} onVerify={handleShopVerify} initialCode={shopCode || ''} />}
             {currentView === AppView.CUSTOMER_DASHBOARD && user && <CustomerDashboard currentUser={user} language={language} t={t} sales={sales} storeSettings={storeSettings} onGoBack={handleGoBack} />}
-            {currentView === AppView.CUSTOMER_PORTAL && <CustomerPortal products={products} language={language} t={t} currentUser={user} onLoginRequest={() => navigateTo(AppView.LOGIN)} onLogout={handleLogout} onUpdateAvatar={() => {}} storeSettings={storeSettings} />}
+            {currentView === AppView.CUSTOMER_PORTAL && <CustomerPortal products={products} language={language} t={t} currentUser={user} onLoginRequest={() => navigateTo(AppView.LOGIN)} onLogout={handleLogout} onUpdateAvatar={() => {}} storeSettings={storeSettings} toggleLanguage={toggleLanguage} toggleTheme={toggleTheme} isDarkMode={isDarkMode} onUpdateStoreSettings={handleUpdateStoreSettings} onNavigate={navigateTo} />}
             {currentView === AppView.VENDOR_PANEL && <VendorPanel products={products} sales={sales} users={users} currentUser={user!} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onBulkUpdateProduct={() => {}} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} language={language} t={t} onGoBack={handleGoBack} storeSettings={storeSettings} />}
             {currentView === AppView.POS && <POS products={products} sales={sales} onCheckout={handleCheckout} storeSettings={storeSettings} onViewOrderHistory={() => navigateTo(AppView.ORDERS)} onUpdateStoreSettings={handleUpdateStoreSettings} t={t} language={language} currentUser={user!} onGoBack={handleGoBack} />}
             {currentView === AppView.INVENTORY && <Inventory 

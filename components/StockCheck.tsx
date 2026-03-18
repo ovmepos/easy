@@ -30,7 +30,7 @@ export const StockCheck: React.FC<StockCheckProps> = ({ products, onUpdateStock,
             setHistory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StockHistoryItem)).sort((a,b) => b.timestamp - a.timestamp));
         });
     } else {
-        const saved = localStorage.getItem('Subspace_stockHistory');
+        const saved = localStorage.getItem('easyPOS_stockHistory');
         if(saved) setHistory(JSON.parse(saved));
     }
   }, []);
@@ -67,7 +67,7 @@ export const StockCheck: React.FC<StockCheckProps> = ({ products, onUpdateStock,
           else {
             const h = [{ id: Date.now().toString(), ...rec }, ...history];
             setHistory(h);
-            localStorage.setItem('Subspace_stockHistory', JSON.stringify(h));
+            localStorage.setItem('easyPOS_stockHistory', JSON.stringify(h));
           }
           setSessionList(prev => prev.filter(i => i.product.id !== item.product.id));
       }
@@ -114,7 +114,7 @@ export const StockCheck: React.FC<StockCheckProps> = ({ products, onUpdateStock,
             }
             const newHistory = [...historyRecords, ...history];
             setHistory(newHistory);
-            localStorage.setItem('Subspace_stockHistory', JSON.stringify(newHistory));
+            localStorage.setItem('easyPOS_stockHistory', JSON.stringify(newHistory));
         }
 
         setSessionList([]);

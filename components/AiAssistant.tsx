@@ -53,7 +53,7 @@ export const AiAssistant: React.FC<AiAssistantProps> = ({
 
     try {
       // Create a new instance right before use to ensure updated API Key
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       
       // Prepare localized business summary for context
       const today = new Date().setHours(0,0,0,0);
@@ -79,7 +79,7 @@ export const AiAssistant: React.FC<AiAssistantProps> = ({
       };
 
       const systemInstruction = `
-        You are the Subspace AI Business Assistant. You are integrated into a Point of Sale app for ${storeSettings.name}.
+        You are the easyPOS AI Business Assistant. You are integrated into a Point of Sale app for ${storeSettings.name}.
         Your goal is to help ${currentUser.name} (${currentUser.role}) understand their business data.
         
         CURRENT BUSINESS CONTEXT:

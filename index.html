@@ -4,19 +4,19 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-    <title>Subspace - Smart Point of Sale & E-commerce Solution</title>
-    <meta name="description" content="Subspace is a smart, cloud-based Point of Sale and E-commerce solution for small and medium businesses. Manage inventory, sales, and customers with ease." />
-    <meta name="keywords" content="POS, Point of Sale, E-commerce, Inventory Management, Retail, Business Software, Subspace" />
-    <meta name="author" content="Subspace Team" />
-    <meta property="og:title" content="Subspace - Smart Point of Sale" />
-    <meta property="og:description" content="Manage your business efficiently with Subspace. Cloud-based POS and E-commerce in one place." />
+    <title>easyPOS - Smart Point of Sale & E-commerce Solution</title>
+    <meta name="description" content="easyPOS is a smart, cloud-based Point of Sale and E-commerce solution for small and medium businesses. Manage inventory, sales, and customers with ease." />
+    <meta name="keywords" content="POS, Point of Sale, E-commerce, Inventory Management, Retail, Business Software, easyPOS" />
+    <meta name="author" content="easyPOS Team" />
+    <meta property="og:title" content="easyPOS - Smart Point of Sale" />
+    <meta property="og:description" content="Manage your business efficiently with easyPOS. Cloud-based POS and E-commerce in one place." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://subspace.node" />
-    <meta property="og:image" content="https://picsum.photos/seed/subspace/1200/630" />
+    <meta property="og:url" content="https://easypos.node" />
+    <meta property="og:image" content="https://picsum.photos/seed/easypos/1200/630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Subspace - Smart Point of Sale" />
-    <meta name="twitter:description" content="Manage your business efficiently with Subspace." />
-    <meta name="twitter:image" content="https://picsum.photos/seed/subspace/1200/630" />
+    <meta name="twitter:title" content="easyPOS - Smart Point of Sale" />
+    <meta name="twitter:description" content="Manage your business efficiently with easyPOS." />
+    <meta name="twitter:image" content="https://picsum.photos/seed/easypos/1200/630" />
     <!-- Add Cairo font for Arabic support -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,11 +53,13 @@
     <style>
       :root { --app-height: 100%; }
       html, body {
-        height: 100svh;
-        overflow: hidden;
+        height: auto;
+        min-height: 100svh;
+        overflow-x: hidden;
+        overflow-y: auto;
         touch-action: manipulation;
       }
-      #root { height: 100svh; }
+      #root { min-height: 100svh; }
       ::-webkit-scrollbar { width: 5px; height: 5px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb {
@@ -92,6 +94,7 @@
     "vite": "https://esm.sh/vite@^7.3.1",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
     "qrcode": "https://esm.sh/qrcode@1.5.3",
+    "html5-qrcode": "https://esm.sh/html5-qrcode@^2.3.8",
     "vite-plugin-pwa": "https://esm.sh/vite-plugin-pwa@^1.2.0",
     "firebase/app": "https://esm.sh/firebase@10.14.1/app",
     "firebase/firestore": "https://esm.sh/firebase@10.14.1/firestore",

@@ -16,6 +16,10 @@ interface HomeProps {
   onNavigate: (view: AppView) => void;
   products: Product[];
   onSeedDemoProducts?: () => void;
+  toggleLanguage: () => void;
+  toggleTheme: () => void;
+  isDarkMode: boolean;
+  onUpdateStoreSettings: (settings: StoreSettings) => void;
 }
 
 export const Home: React.FC<HomeProps> = ({
@@ -27,7 +31,11 @@ export const Home: React.FC<HomeProps> = ({
   storeSettings,
   onNavigate,
   products,
-  onSeedDemoProducts
+  onSeedDemoProducts,
+  toggleLanguage,
+  toggleTheme,
+  isDarkMode,
+  onUpdateStoreSettings
 }) => {
   const [activeBanner, setActiveBanner] = useState(0);
   const [location, setLocation] = useState<string>(t('detectingLocation'));
@@ -157,58 +165,74 @@ export const Home: React.FC<HomeProps> = ({
 
   const featuredProducts = products.slice(0, 8);
 
+  const currencies = [
+    { code: 'USD', symbol: '$' },
+    { code: 'SAR', symbol: 'SR' },
+    { code: 'AED', symbol: 'DH' },
+    { code: 'KWD', symbol: 'KD' },
+    { code: 'BHD', symbol: 'BD' },
+    { code: 'OMR', symbol: 'RO' },
+    { code: 'QAR', symbol: 'QR' }
+  ];
+
+  const toggleCurrency = () => {
+    const currentIndex = currencies.findIndex(c => c.code === storeSettings.currency);
+    const nextIndex = (currentIndex + 1) % currencies.length;
+    onUpdateStoreSettings({ ...storeSettings, currency: currencies[nextIndex].code });
+  };
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-brand-500 selection:text-white">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-[#0a0a0a] text-white' : 'bg-slate-50 text-slate-900'} font-sans selection:bg-brand-500 selection:text-white transition-colors`}>
       {/* Ticker */}
       <div className="bg-brand-500 py-1.5 overflow-hidden whitespace-nowrap">
-        <div className="inline-block animate-marquee text-[10px] font-bold uppercase tracking-widest px-4">
+        <div className="inline-block animate-marquee text-[10px] font-bold uppercase tracking-widest px-4 text-white">
           🔥 Limited Time Offer: Get 80% OFF on Canva Pro! • New Gift Cards Added: Amazon, Netflix, Spotify • Free Delivery on all orders above $50 • 24/7 Support Available 🔥
         </div>
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5 px-4 lg:px-8 py-3">
+      <header className={`sticky top-0 z-50 ${isDarkMode ? 'bg-[#0a0a0a]/90' : 'bg-white/90'} backdrop-blur-md border-b ${isDarkMode ? 'border-white/5' : 'border-slate-200'} px-4 lg:px-8 py-3`}>
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('HOME')}>
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate(AppView.HOME)}>
               <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
                 <div className="w-4 h-4 bg-white rounded-sm rotate-45"></div>
               </div>
-              <span className="text-xl font-bold tracking-tighter">Subspace</span>
+              <span className="text-xl font-bold tracking-tighter">easyPOS</span>
             </div>
 
-            <nav className="hidden xl:flex items-center gap-6 text-xs font-bold text-zinc-400">
-              <button onClick={() => onNavigate('HOME')} className="text-white uppercase tracking-widest">{t('home')}</button>
-              <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="hover:text-white uppercase tracking-widest">{t('explore')}</button>
-              <button onClick={() => onNavigate('CUSTOMER_DASHBOARD')} className="hover:text-white uppercase tracking-widest">{t('wallet')}</button>
-              <button onClick={() => onNavigate('CUSTOMER_DASHBOARD')} className="hover:text-white uppercase tracking-widest">{t('chat')}</button>
-              <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="hover:text-white uppercase tracking-widest relative">
+            <nav className={`hidden xl:flex items-center gap-6 text-xs font-bold ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
+              <button onClick={() => onNavigate(AppView.HOME)} className={`${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-widest`}>{t('home')}</button>
+              <button onClick={() => onNavigate(AppView.CUSTOMER_PORTAL)} className="hover:text-brand-500 uppercase tracking-widest transition-colors">{t('explore')}</button>
+              <button onClick={() => onNavigate(AppView.CUSTOMER_DASHBOARD)} className="hover:text-brand-500 uppercase tracking-widest transition-colors">{t('wallet')}</button>
+              <button onClick={() => onNavigate(AppView.CUSTOMER_DASHBOARD)} className="hover:text-brand-500 uppercase tracking-widest transition-colors">{t('chat')}</button>
+              <button onClick={() => onNavigate(AppView.CUSTOMER_PORTAL)} className="hover:text-brand-500 uppercase tracking-widest relative transition-colors">
                 {t('cart')}
-                <span className="absolute -top-2 -right-2 w-3.5 h-3.5 bg-brand-500 text-white text-[8px] rounded-full flex items-center justify-center">0</span>
+                <span className="absolute -top-2 -right-2 w-3.5 h-3.5 bg-brand-500 text-white text-[8px] rounded-full flex items-center justify-center shadow-lg">0</span>
               </button>
             </nav>
           </div>
 
           <div className="flex-1 max-w-xl relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-white transition-colors" size={16} />
+            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-zinc-500 group-focus-within:text-white' : 'text-slate-400 group-focus-within:text-slate-900'} transition-colors`} size={16} />
             <input 
               type="text" 
               placeholder={t('quickSearch')} 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-zinc-900/80 border border-white/10 rounded-xl py-2 pl-11 pr-24 text-sm focus:outline-none focus:border-brand-500/50 transition-all"
+              className={`w-full ${isDarkMode ? 'bg-zinc-900/80 border-white/10 text-white' : 'bg-slate-100 border-slate-200 text-slate-900'} border rounded-xl py-2 pl-11 pr-24 text-sm focus:outline-none focus:border-brand-500/50 transition-all`}
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <button 
                 onClick={() => setIsScanning(true)}
-                className="p-1.5 hover:bg-white/10 rounded-lg text-zinc-500 hover:text-white transition-all"
+                className={`p-1.5 ${isDarkMode ? 'hover:bg-white/10 text-zinc-500 hover:text-white' : 'hover:bg-slate-200 text-slate-400 hover:text-slate-900'} rounded-lg transition-all`}
                 title={t('barcodeScan')}
               >
                 <Scan size={16} />
               </button>
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="p-1.5 hover:bg-white/10 rounded-lg text-zinc-500 hover:text-white transition-all"
+                className={`p-1.5 ${isDarkMode ? 'hover:bg-white/10 text-zinc-500 hover:text-white' : 'hover:bg-slate-200 text-slate-400 hover:text-slate-900'} rounded-lg transition-all`}
                 title={t('imageSearch')}
               >
                 {isImageAnalyzing ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
@@ -224,29 +248,48 @@ export const Home: React.FC<HomeProps> = ({
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 text-[10px] text-zinc-400">
+            <div className={`hidden md:flex items-center gap-2 text-[10px] ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
               <MapPin size={12} className="text-brand-500" />
               <div className="flex flex-col">
                 <span className="opacity-50">{t('deliveryInMinutes')}</span>
-                <span className="font-bold text-white truncate max-w-[120px]">{location}</span>
+                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} truncate max-w-[120px]`}>{location}</span>
               </div>
             </div>
 
-            <button className="flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-zinc-900 border border-white/5 uppercase">
-              {language} <Globe size={12} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={toggleLanguage}
+                className={`flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg ${isDarkMode ? 'bg-zinc-900 border-white/5 text-white' : 'bg-slate-100 border-slate-200 text-slate-900'} border uppercase hover:border-brand-500/50 transition-all`}
+              >
+                {language} <Globe size={12} />
+              </button>
+
+              <button 
+                onClick={toggleCurrency}
+                className={`flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg ${isDarkMode ? 'bg-zinc-900 border-white/5 text-white' : 'bg-slate-100 border-slate-200 text-slate-900'} border uppercase hover:border-brand-500/50 transition-all`}
+              >
+                {storeSettings.currency} <Wallet size={12} />
+              </button>
+
+              <button 
+                onClick={toggleTheme}
+                className={`p-2 rounded-lg ${isDarkMode ? 'bg-zinc-900 border-white/5 text-white' : 'bg-slate-100 border-slate-200 text-slate-900'} border hover:border-brand-500/50 transition-all`}
+              >
+                {isDarkMode ? <Zap size={14} className="text-yellow-400" /> : <Zap size={14} className="text-slate-400" />}
+              </button>
+            </div>
 
             {currentUser ? (
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center font-bold text-sm border border-white/10 overflow-hidden">
+                <div className={`w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center font-bold text-sm border ${isDarkMode ? 'border-white/10' : 'border-slate-200'} overflow-hidden shadow-lg`}>
                   {currentUser.avatar ? <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" /> : currentUser.name[0]}
                 </div>
-                <button onClick={onLogout} className="p-2 hover:bg-red-500/10 text-zinc-500 hover:text-red-500 rounded-lg transition-all">
+                <button onClick={onLogout} className={`p-2 ${isDarkMode ? 'hover:bg-red-500/10 text-zinc-500' : 'hover:bg-red-50 text-slate-400'} hover:text-red-500 rounded-lg transition-all`}>
                   <LogOut size={18} />
                 </button>
               </div>
             ) : (
-              <button onClick={onLoginRequest} className="px-5 py-2 bg-brand-500 text-white rounded-xl text-[10px] font-bold hover:bg-brand-600 transition-all uppercase tracking-widest">
+              <button onClick={onLoginRequest} className="px-5 py-2 bg-brand-500 text-white rounded-xl text-[10px] font-bold hover:bg-brand-600 transition-all uppercase tracking-widest shadow-lg shadow-brand-500/20">
                 Login
               </button>
             )}
@@ -347,7 +390,7 @@ export const Home: React.FC<HomeProps> = ({
         <section>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold uppercase tracking-widest">Trending Subscriptions</h3>
-            <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
+            <button onClick={() => onNavigate(AppView.CUSTOMER_PORTAL)} className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProducts.map((product, idx) => (
@@ -389,10 +432,10 @@ export const Home: React.FC<HomeProps> = ({
           </div>
         </section>
 
-        {/* Subspace Premium Banner */}
+        {/* easyPOS Premium Banner */}
         <section className="bg-gradient-to-r from-brand-600 to-indigo-600 rounded-[2.5rem] p-8 lg:p-12 flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
           <div className="relative z-10 space-y-4 text-center lg:text-left">
-            <h2 className="text-3xl lg:text-5xl font-black uppercase tracking-tighter italic">{t('subspacePremium')}</h2>
+            <h2 className="text-3xl lg:text-5xl font-black uppercase tracking-tighter italic">{t('easyposPremium')}</h2>
             <p className="text-sm opacity-90 font-medium max-w-md">{t('lookingForUpgrade')}</p>
             <button className="px-10 py-4 bg-white text-black rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all">
               {t('buyNow')}
@@ -412,6 +455,67 @@ export const Home: React.FC<HomeProps> = ({
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/20 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl"></div>
         </section>
+
+        {/* Trust Factors Section */}
+        <section className="space-y-12 py-12">
+          {/* Security Badges */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { icon: <ShieldCheck className="text-emerald-500" />, title: 'SSL Secured', desc: '256-bit Encryption' },
+              { icon: <Shield className="text-blue-500" />, title: 'PCI-DSS Compliant', desc: 'Secure Payments' },
+              { icon: <Database className="text-purple-500" />, title: 'Encrypted Data', desc: 'Privacy First' },
+              { icon: <Zap className="text-yellow-500" />, title: '99.9% Uptime', desc: 'Enterprise Grade' }
+            ].map((badge, i) => (
+              <div key={i} className="bg-zinc-900/50 border border-white/5 p-6 rounded-2xl flex flex-col items-center text-center gap-3">
+                <div className="p-3 bg-white/5 rounded-xl">{badge.icon}</div>
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest">{badge.title}</h4>
+                  <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest mt-1">{badge.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Trusted By */}
+          <div className="text-center space-y-8">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Trusted by 500+ Global Enterprises</h3>
+            <div className="flex flex-wrap justify-center items-center gap-12 opacity-30 grayscale hover:grayscale-0 transition-all">
+              {['Microsoft', 'Google', 'Amazon', 'Netflix', 'Spotify', 'Adobe'].map(brand => (
+                <span key={brand} className="text-xl font-black tracking-tighter uppercase italic">{brand}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Case Studies / Testimonials */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {[
+              {
+                title: "How 'The Coffee Matrix' Scaled to 50 Locations",
+                stat: "30% Increase in Efficiency",
+                quote: "easyPOS transformed our checkout experience. The AI identity scan reduced fraud by 95%.",
+                author: "Sarah Chen, CEO"
+              },
+              {
+                title: "Global Subscriptions Simplified for 'TechFlow'",
+                stat: "2M+ Transactions Processed",
+                quote: "The best enterprise POS we've ever used. Seamless, fast, and incredibly secure.",
+                author: "Marcus Thorne, CTO"
+              }
+            ].map((study, i) => (
+              <div key={i} className="bg-zinc-900 border border-white/5 p-8 rounded-[2.5rem] space-y-6 group hover:border-brand-500/30 transition-all">
+                <div className="space-y-2">
+                  <span className="text-brand-500 text-[10px] font-black uppercase tracking-widest">{study.stat}</span>
+                  <h4 className="text-xl font-black tracking-tight">{study.title}</h4>
+                </div>
+                <p className="text-sm text-zinc-400 italic leading-relaxed">"{study.quote}"</p>
+                <div className="flex items-center gap-4 pt-4 border-t border-white/5">
+                  <div className="w-10 h-10 rounded-full bg-zinc-800"></div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{study.author}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
@@ -422,7 +526,7 @@ export const Home: React.FC<HomeProps> = ({
               <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
                 <div className="w-4 h-4 bg-white rounded-sm rotate-45"></div>
               </div>
-              <span className="text-xl font-bold tracking-tighter">Subspace</span>
+              <span className="text-xl font-bold tracking-tighter">easyPOS</span>
             </div>
             <p className="text-[10px] text-zinc-500 leading-relaxed uppercase tracking-widest">
               {t('copyright')} {t('poweredBy')}
@@ -508,19 +612,19 @@ export const Home: React.FC<HomeProps> = ({
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#0a0a0a]/95 backdrop-blur-2xl border-t border-white/5 px-6 py-3">
         <div className="flex items-center justify-between max-w-md mx-auto">
-          <button onClick={() => onNavigate('HOME')} className="flex flex-col items-center gap-1 text-brand-500">
+          <button onClick={() => onNavigate(AppView.HOME)} className="flex flex-col items-center gap-1 text-brand-500">
             <HomeIcon size={20} />
             <span className="text-[8px] font-black uppercase tracking-widest">{t('home')}</span>
           </button>
-          <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="flex flex-col items-center gap-1 text-zinc-500">
+          <button onClick={() => onNavigate(AppView.CUSTOMER_PORTAL)} className="flex flex-col items-center gap-1 text-zinc-500">
             <Compass size={20} />
             <span className="text-[8px] font-black uppercase tracking-widest">{t('explore')}</span>
           </button>
-          <button onClick={() => onNavigate('CUSTOMER_DASHBOARD')} className="flex flex-col items-center gap-1 text-zinc-500">
+          <button onClick={() => onNavigate(AppView.CUSTOMER_DASHBOARD)} className="flex flex-col items-center gap-1 text-zinc-500">
             <Wallet size={20} />
             <span className="text-[8px] font-black uppercase tracking-widest">{t('wallet')}</span>
           </button>
-          <button onClick={() => onNavigate('CUSTOMER_PORTAL')} className="flex flex-col items-center gap-1 text-zinc-500">
+          <button onClick={() => onNavigate(AppView.CUSTOMER_PORTAL)} className="flex flex-col items-center gap-1 text-zinc-500">
             <ShoppingCart size={20} />
             <span className="text-[8px] font-black uppercase tracking-widest">{t('cart')}</span>
           </button>
@@ -539,7 +643,7 @@ export const Home: React.FC<HomeProps> = ({
             </div>
             <div className="p-8 overflow-y-auto text-xs font-medium text-zinc-400 leading-relaxed space-y-4">
               <p>
-                This is a placeholder for the <strong>{showPolicy}</strong>. In a production environment, this section would contain the full legal text governing the use of Subspace services.
+                This is a placeholder for the <strong>{showPolicy}</strong>. In a production environment, this section would contain the full legal text governing the use of easyPOS services.
               </p>
               <p>
                 Our commitment to transparency and security is paramount. We ensure that all user data is handled with the highest standards of privacy and that our terms are clear and fair for all business partners and customers.

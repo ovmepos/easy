@@ -111,7 +111,7 @@ export const RoleOverview: React.FC<RoleOverviewProps> = ({ language, t, onGoBac
                   {roles[currentSlide].title}
                 </h3>
                 <p className="text-zinc-400 text-lg">
-                  Explore the capabilities and permissions assigned to the {roles[currentSlide].id} role within the Subspace ecosystem.
+                  Explore the capabilities and permissions assigned to the {roles[currentSlide].id} role within the easyPOS ecosystem.
                 </p>
               </div>
 
