@@ -1,15 +1,18 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Product, Sale, User, Language, VendorSettings, StoreSettings } from '../types';
+import { Product, Sale, User, Language, VendorSettings, StoreSettings, Category, GiftCard, Brand } from '../types';
 import { CURRENCY } from '../constants';
 import { formatCurrency, formatNumber } from '../utils/format';
-import { Package, TrendingUp, DollarSign, Search, Plus, List, ChevronLeft, ArrowUpRight, ShoppingBag, Layers, Users, ShieldCheck, Trash2, Edit2, X, Save, Key, Mail, Store, Cloud, Calendar, RefreshCw, Loader2, Zap, UserCheck, ShieldAlert, MapPin, Type, Copy } from 'lucide-react';
+import { Package, TrendingUp, DollarSign, Search, Plus, List, ChevronLeft, ArrowUpRight, ShoppingBag, Layers, Users, ShieldCheck, Trash2, Edit2, X, Save, Key, Mail, Store, Cloud, Calendar, RefreshCw, Loader2, Zap, UserCheck, ShieldAlert, MapPin, Type, Copy, Tag, CreditCard, Award, Image as ImageIcon } from 'lucide-react';
 import { Inventory } from './Inventory';
 
 interface VendorPanelProps {
   products: Product[];
   sales: Sale[];
   users: User[];
+  categories: Category[];
+  giftCards: GiftCard[];
+  brands: Brand[];
   currentUser: User;
   onAddProduct: (p: Product) => void;
   onUpdateProduct: (p: Product) => void;
@@ -18,6 +21,15 @@ interface VendorPanelProps {
   onAddUser: (u: User) => void;
   onUpdateUser: (u: User) => void;
   onDeleteUser: (id: string) => void;
+  onAddCategory: (c: Omit<Category, 'id'>) => void;
+  onUpdateCategory: (c: Category) => void;
+  onDeleteCategory: (id: string) => void;
+  onAddGiftCard: (gc: Omit<GiftCard, 'id'>) => void;
+  onUpdateGiftCard: (gc: GiftCard) => void;
+  onDeleteGiftCard: (id: string) => void;
+  onAddBrand: (b: Omit<Brand, 'id'>) => void;
+  onUpdateBrand: (b: Brand) => void;
+  onDeleteBrand: (id: string) => void;
   language: Language;
   t: (key: string) => string;
   storeSettings: StoreSettings;
@@ -25,15 +37,36 @@ interface VendorPanelProps {
 }
 
 export const VendorPanel: React.FC<VendorPanelProps> = ({
-  products, sales, users, currentUser, onAddProduct, onUpdateProduct, onDeleteProduct, onBulkUpdateProduct, 
-  onAddUser, onUpdateUser, onDeleteUser, language, t, storeSettings, onGoBack
+  products, sales, users, categories, giftCards, brands, currentUser, 
+  onAddProduct, onUpdateProduct, onDeleteProduct, onBulkUpdateProduct, 
+  onAddUser, onUpdateUser, onDeleteUser,
+  onAddCategory, onUpdateCategory, onDeleteCategory,
+  onAddGiftCard, onUpdateGiftCard, onDeleteGiftCard,
+  onAddBrand, onUpdateBrand, onDeleteBrand,
+  language, t, storeSettings, onGoBack
 }) => {
-  const [activeSubView, setActiveSubView] = useState<'DASHBOARD' | 'INVENTORY' | 'TEAM' | 'STORE' | 'BACKUP'>('DASHBOARD');
-  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
-  const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+  const [activeSubView, setActiveSubView] = useState<'DASHBOARD' | 'INVENTORY' | 'TEAM' | 'STORE' | 'CATALOG'>('DASHBOARD');
+  const [activeCatalogTab, setActiveCatalogTab] = useState<'CATEGORIES' | 'GIFT_CARDS' | 'BRANDS'>('CATEGORIES');
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'STAFF' | 'CATEGORY' | 'GIFT_CARD' | 'BRAND'>('STAFF');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [lastProvisionedStaff, setLastProvisionedStaff] = useState<User | null>(null);
+
   const [staffFormData, setStaffFormData] = useState<Partial<User>>({ 
     name: '', username: '', password: '', role: 'VENDOR_STAFF', email: '' 
+  });
+
+  const [categoryFormData, setCategoryFormData] = useState<Partial<Category>>({
+    name: '', description: '', icon: '', color: ''
+  });
+
+  const [giftCardFormData, setGiftCardFormData] = useState<Partial<GiftCard>>({
+    name: '', icon: '', discount: ''
+  });
+
+  const [brandFormData, setBrandFormData] = useState<Partial<Brand>>({
+    name: '', logo: ''
   });
 
   const [storeFormData, setStoreFormData] = useState<VendorSettings>(currentUser.vendorSettings || {
@@ -76,12 +109,12 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
     }
     
     // Auto-generate credentials for new staff
-    const isNew = !editingStaffId;
+    const isNew = !editingId;
     const finalUsername = isNew ? generateStaffUsername() : staffFormData.username!;
     const finalPassword = isNew ? generateStaffPassword() : staffFormData.password!;
 
     const staffData: User = {
-        id: editingStaffId || `stf_${Date.now()}`,
+        id: editingId || `stf_${Date.now()}`,
         name: staffFormData.name!.trim(),
         username: finalUsername,
         password: finalPassword,
@@ -90,15 +123,51 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
         vendorId: vendorId
     };
 
-    if (editingStaffId) {
+    if (editingId) {
         onUpdateUser(staffData);
     } else {
         onAddUser(staffData);
         setLastProvisionedStaff(staffData); // Trigger Credential Card view
     }
     
-    setIsStaffModalOpen(false);
+    setIsModalOpen(false);
     setStaffFormData({ name: '', username: '', password: '', role: 'VENDOR_STAFF', email: '' });
+  };
+
+  const handleSaveCategory = () => {
+    if (!categoryFormData.name) return;
+    const data = { ...categoryFormData } as Category;
+    if (editingId) {
+      onUpdateCategory({ ...data, id: editingId });
+    } else {
+      onAddCategory(data);
+    }
+    setIsModalOpen(false);
+    setCategoryFormData({ name: '', description: '', icon: '', color: '' });
+  };
+
+  const handleSaveGiftCard = () => {
+    if (!giftCardFormData.name) return;
+    const data = { ...giftCardFormData, vendorId } as GiftCard;
+    if (editingId) {
+      onUpdateGiftCard({ ...data, id: editingId });
+    } else {
+      onAddGiftCard(data);
+    }
+    setIsModalOpen(false);
+    setGiftCardFormData({ name: '', icon: '', discount: '' });
+  };
+
+  const handleSaveBrand = () => {
+    if (!brandFormData.name) return;
+    const data = { ...brandFormData, vendorId } as Brand;
+    if (editingId) {
+      onUpdateBrand({ ...data, id: editingId });
+    } else {
+      onAddBrand(data);
+    }
+    setIsModalOpen(false);
+    setBrandFormData({ name: '', logo: '' });
   };
 
   const copyToClipboard = (text: string) => {
@@ -139,8 +208,8 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
           </div>
         </div>
         <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl overflow-x-auto no-scrollbar shrink-0">
-            {/* Corrected typo: replaced setActiveTab with setActiveSubView */}
             <button onClick={() => setActiveSubView('DASHBOARD')} className={`px-4 py-2.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubView === 'DASHBOARD' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-sm' : 'text-slate-500'}`}>Stats</button>
+            <button onClick={() => setActiveSubView('CATALOG')} className={`px-4 py-2.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubView === 'CATALOG' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-sm' : 'text-slate-500'}`}>Catalog</button>
             <button onClick={() => setActiveSubView('TEAM')} className={`px-4 py-2.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubView === 'TEAM' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-sm' : 'text-slate-500'}`}>Team</button>
             <button onClick={() => setActiveSubView('STORE')} className={`px-4 py-2.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubView === 'STORE' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-sm' : 'text-slate-500'}`}>Node</button>
         </div>
@@ -210,7 +279,7 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
                     <h3 className="text-xl md:text-3xl font-black uppercase italic tracking-tighter mb-1">Team Provisioning</h3>
                     <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[8px] md:text-[10px]">Access Slots: {myStaff.length} / {staffLimit} Used</p>
                 </div>
-                <button disabled={myStaff.length >= staffLimit} onClick={() => { setEditingStaffId(null); setIsStaffModalOpen(true); }} className="relative z-10 w-full md:w-auto px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl md:rounded-2xl font-black uppercase tracking-widest text-[9px] shadow-2xl active:scale-95 disabled:opacity-30 transition-all flex items-center justify-center gap-3 italic">
+                <button disabled={myStaff.length >= staffLimit} onClick={() => { setEditingId(null); setModalType('STAFF'); setIsModalOpen(true); }} className="relative z-10 w-full md:w-auto px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl md:rounded-2xl font-black uppercase tracking-widest text-[9px] shadow-2xl active:scale-95 disabled:opacity-30 transition-all flex items-center justify-center gap-3 italic">
                     <Plus size={16} strokeWidth={3} /> Add New Operator
                 </button>
             </div>
@@ -234,7 +303,7 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
                                         </div>
                                     </td>
                                     <td className="p-4 md:p-8"><span className="px-2 md:px-4 py-1 rounded-full text-[7px] md:text-[9px] font-black uppercase tracking-widest border bg-brand-50 text-brand-600 border-brand-100 dark:bg-brand-950/20 font-mono">@{u.username}</span></td>
-                                    <td className="p-4 md:p-8 text-right"><div className="flex justify-end gap-1 md:gap-2"><button onClick={() => { setEditingStaffId(u.id); setStaffFormData(u); setIsStaffModalOpen(true); }} className="p-2 md:p-3 text-slate-300 hover:text-brand-500 transition-colors"><Edit2 size={16}/></button><button onClick={() => onDeleteUser(u.id)} className="p-2 md:p-3 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={16}/></button></div></td>
+                                    <td className="p-4 md:p-8 text-right"><div className="flex justify-end gap-1 md:gap-2"><button onClick={() => { setEditingId(u.id); setModalType('STAFF'); setStaffFormData(u); setIsModalOpen(true); }} className="p-2 md:p-3 text-slate-300 hover:text-brand-500 transition-colors"><Edit2 size={16}/></button><button onClick={() => onDeleteUser(u.id)} className="p-2 md:p-3 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={16}/></button></div></td>
                                 </tr>
                             ))}
                             {myStaff.length === 0 && (
@@ -246,6 +315,110 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
                     </table>
                 </div>
             </div>
+        </div>
+      ) : activeSubView === 'CATALOG' ? (
+        <div className="animate-fade-in space-y-6 md:space-y-8 pb-20">
+            <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl w-fit">
+                <button onClick={() => setActiveCatalogTab('CATEGORIES')} className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeCatalogTab === 'CATEGORIES' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-sm' : 'text-slate-500'}`}>Categories</button>
+                <button onClick={() => setActiveCatalogTab('GIFT_CARDS')} className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeCatalogTab === 'GIFT_CARDS' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-sm' : 'text-slate-500'}`}>Gift Cards</button>
+                <button onClick={() => setActiveCatalogTab('BRANDS')} className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeCatalogTab === 'BRANDS' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-sm' : 'text-slate-500'}`}>Brands</button>
+            </div>
+
+            {activeCatalogTab === 'CATEGORIES' && (
+                <div className="space-y-6">
+                    <div className="bg-slate-900 text-white p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl flex flex-col md:flex-row justify-between items-center gap-6 border-2 border-brand-500/20">
+                        <div className="text-center md:text-left">
+                            <h3 className="text-xl md:text-3xl font-black uppercase italic tracking-tighter mb-1">Categories</h3>
+                            <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[8px] md:text-[10px]">{categories.length} Total Categories</p>
+                        </div>
+                        <button onClick={() => { setEditingId(null); setModalType('CATEGORY'); setCategoryFormData({ name: '', description: '', icon: '', color: '' }); setIsModalOpen(true); }} className="w-full md:w-auto px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl md:rounded-2xl font-black uppercase tracking-widest text-[9px] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 italic">
+                            <Plus size={16} strokeWidth={3} /> New Category
+                        </button>
+                    </div>
+                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] md:rounded-[3.5rem] shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-50 dark:bg-slate-800 text-slate-400 font-black uppercase text-[8px] md:text-[9px] tracking-widest">
+                                    <tr><th className="p-4 md:p-8">Category</th><th className="p-4 md:p-8">Description</th><th className="p-4 md:p-8 text-right">Actions</th></tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                                    {categories.map((c) => (
+                                        <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                                            <td className="p-4 md:p-8">
+                                                <div className="flex items-center gap-3 md:gap-4">
+                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${c.color || 'bg-slate-100'}`}>{c.icon || <Tag size={18}/>}</div>
+                                                    <div className="font-black text-slate-900 dark:text-white uppercase italic text-xs md:text-sm">{c.name}</div>
+                                                </div>
+                                            </td>
+                                            <td className="p-4 md:p-8 text-slate-500 text-[10px] font-bold uppercase tracking-widest">{c.description || 'No description'}</td>
+                                            <td className="p-4 md:p-8 text-right"><div className="flex justify-end gap-1 md:gap-2"><button onClick={() => { setEditingId(c.id); setModalType('CATEGORY'); setCategoryFormData(c); setIsModalOpen(true); }} className="p-2 md:p-3 text-slate-300 hover:text-brand-500 transition-colors"><Edit2 size={16}/></button><button onClick={() => onDeleteCategory(c.id)} className="p-2 md:p-3 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={16}/></button></div></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeCatalogTab === 'GIFT_CARDS' && (
+                <div className="space-y-6">
+                    <div className="bg-slate-900 text-white p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl flex flex-col md:flex-row justify-between items-center gap-6 border-2 border-brand-500/20">
+                        <div className="text-center md:text-left">
+                            <h3 className="text-xl md:text-3xl font-black uppercase italic tracking-tighter mb-1">Gift Cards</h3>
+                            <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[8px] md:text-[10px]">{giftCards.length} Active Cards</p>
+                        </div>
+                        <button onClick={() => { setEditingId(null); setModalType('GIFT_CARD'); setGiftCardFormData({ name: '', icon: '', discount: '' }); setIsModalOpen(true); }} className="w-full md:w-auto px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl md:rounded-2xl font-black uppercase tracking-widest text-[9px] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 italic">
+                            <Plus size={16} strokeWidth={3} /> New Gift Card
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {giftCards.map((gc) => (
+                            <div key={gc.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm group hover:shadow-xl transition-all">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 p-2 flex items-center justify-center overflow-hidden">
+                                        <img src={gc.icon} alt={gc.name} className="w-full h-full object-contain" />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => { setEditingId(gc.id); setModalType('GIFT_CARD'); setGiftCardFormData(gc); setIsModalOpen(true); }} className="p-2 text-slate-300 hover:text-brand-500 transition-colors"><Edit2 size={16}/></button>
+                                        <button onClick={() => onDeleteGiftCard(gc.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={16}/></button>
+                                    </div>
+                                </div>
+                                <h4 className="text-lg font-black uppercase italic tracking-tighter dark:text-white mb-1">{gc.name}</h4>
+                                <div className="text-brand-600 font-black text-xs uppercase tracking-widest italic">{gc.discount}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {activeCatalogTab === 'BRANDS' && (
+                <div className="space-y-6">
+                    <div className="bg-slate-900 text-white p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl flex flex-col md:flex-row justify-between items-center gap-6 border-2 border-brand-500/20">
+                        <div className="text-center md:text-left">
+                            <h3 className="text-xl md:text-3xl font-black uppercase italic tracking-tighter mb-1">Favourite Brands</h3>
+                            <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[8px] md:text-[10px]">{brands.length} Partner Brands</p>
+                        </div>
+                        <button onClick={() => { setEditingId(null); setModalType('BRAND'); setBrandFormData({ name: '', logo: '' }); setIsModalOpen(true); }} className="w-full md:w-auto px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl md:rounded-2xl font-black uppercase tracking-widest text-[9px] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 italic">
+                            <Plus size={16} strokeWidth={3} /> New Brand
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+                        {brands.map((b) => (
+                            <div key={b.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm group hover:shadow-xl transition-all flex flex-col items-center text-center">
+                                <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-800 p-3 flex items-center justify-center overflow-hidden mb-4">
+                                    <img src={b.logo} alt={b.name} className="w-full h-full object-contain grayscale group-hover:grayscale-0 transition-all" />
+                                </div>
+                                <h4 className="text-[10px] font-black uppercase italic tracking-widest dark:text-white mb-4">{b.name}</h4>
+                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                    <button onClick={() => { setEditingId(b.id); setModalType('BRAND'); setBrandFormData(b); setIsModalOpen(true); }} className="p-1.5 text-slate-300 hover:text-brand-500 transition-colors"><Edit2 size={14}/></button>
+                                    <button onClick={() => onDeleteBrand(b.id)} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
       ) : activeSubView === 'STORE' ? (
           <div className="animate-fade-in max-w-4xl mx-auto space-y-6 md:space-y-8 pb-20">
@@ -315,34 +488,76 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
           </div>
       ) : null}
 
-      {isStaffModalOpen && (
+      {isModalOpen && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-2xl z-[120] flex items-center justify-center p-4">
               <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2rem] md:rounded-[3rem] shadow-2xl overflow-hidden animate-fade-in-up border border-white/10 flex flex-col max-h-[90vh]">
                   <div className="p-6 md:p-8 border-b border-white/5 flex justify-between items-center bg-slate-900 text-white">
-                      <div><h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter leading-none">{editingStaffId ? 'Update Node' : 'Provision Staff'}</h3><p className="text-[7px] md:text-[9px] font-black text-brand-400 uppercase tracking-widest mt-1">Team Hub Initialization</p></div>
-                      <button onClick={() => setIsStaffModalOpen(false)} className="p-2 bg-white/5 rounded-lg hover:text-red-500"><X size={20}/></button>
+                      <div>
+                        <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter leading-none">
+                            {editingId ? 'Update' : 'Create'} {modalType === 'STAFF' ? 'Operator' : modalType === 'CATEGORY' ? 'Category' : modalType === 'GIFT_CARD' ? 'Gift Card' : 'Brand'}
+                        </h3>
+                        <p className="text-[7px] md:text-[9px] font-black text-brand-400 uppercase tracking-widest mt-1">Management Hub</p>
+                      </div>
+                      <button onClick={() => setIsModalOpen(false)} className="p-2 bg-white/5 rounded-lg hover:text-red-500"><X size={20}/></button>
                   </div>
                   <div className="p-6 md:p-8 space-y-4 md:space-y-6 overflow-y-auto custom-scrollbar">
-                      <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Legal Name</label><input type="text" value={staffFormData.name} onChange={e => setStaffFormData({...staffFormData, name: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" /></div>
-                      <div className="space-y-1">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Contact Email</label>
-                          <input type="email" value={staffFormData.email} onChange={e => setStaffFormData({...staffFormData, email: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" placeholder="staff@business.com" />
-                      </div>
-                      
-                      {!editingStaffId && (
-                          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-center">
-                              <p className="text-[8px] font-black text-slate-400 uppercase italic leading-relaxed">The system will generate a secure Access ID and random Passkey upon commitment.</p>
-                          </div>
+                      {modalType === 'STAFF' && (
+                        <>
+                            <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Legal Name</label><input type="text" value={staffFormData.name} onChange={e => setStaffFormData({...staffFormData, name: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" /></div>
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Contact Email</label>
+                                <input type="email" value={staffFormData.email} onChange={e => setStaffFormData({...staffFormData, email: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" placeholder="staff@business.com" />
+                            </div>
+                            
+                            {!editingId && (
+                                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-center">
+                                    <p className="text-[8px] font-black text-slate-400 uppercase italic leading-relaxed">The system will generate a secure Access ID and random Passkey upon commitment.</p>
+                                </div>
+                            )}
+
+                            {editingId && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Operator ID</label><input type="text" value={staffFormData.username} onChange={e => setStaffFormData({...staffFormData, username: e.target.value})} className="w-full p-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 rounded-xl font-mono text-xs text-slate-500 outline-none" readOnly /></div>
+                                    <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Passkey</label><input type="password" value={staffFormData.password} onChange={e => setStaffFormData({...staffFormData, password: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" /></div>
+                                </div>
+                            )}
+                        </>
                       )}
 
-                      {editingStaffId && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Operator ID</label><input type="text" value={staffFormData.username} onChange={e => setStaffFormData({...staffFormData, username: e.target.value})} className="w-full p-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 rounded-xl font-mono text-xs text-slate-500 outline-none" readOnly /></div>
-                              <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Passkey</label><input type="password" value={staffFormData.password} onChange={e => setStaffFormData({...staffFormData, password: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" /></div>
-                          </div>
+                      {modalType === 'CATEGORY' && (
+                        <>
+                            <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Category Name</label><input type="text" value={categoryFormData.name} onChange={e => setCategoryFormData({...categoryFormData, name: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" /></div>
+                            <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Description</label><input type="text" value={categoryFormData.description} onChange={e => setCategoryFormData({...categoryFormData, description: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" /></div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Icon (Emoji)</label><input type="text" value={categoryFormData.icon} onChange={e => setCategoryFormData({...categoryFormData, icon: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" placeholder="🍔" /></div>
+                                <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Color (Tailwind Class)</label><input type="text" value={categoryFormData.color} onChange={e => setCategoryFormData({...categoryFormData, color: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" placeholder="bg-blue-500/20" /></div>
+                            </div>
+                        </>
+                      )}
+
+                      {modalType === 'GIFT_CARD' && (
+                        <>
+                            <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Card Name</label><input type="text" value={giftCardFormData.name} onChange={e => setGiftCardFormData({...giftCardFormData, name: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" /></div>
+                            <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Icon URL</label><input type="text" value={giftCardFormData.icon} onChange={e => setGiftCardFormData({...giftCardFormData, icon: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" /></div>
+                            <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Discount Text</label><input type="text" value={giftCardFormData.discount} onChange={e => setGiftCardFormData({...giftCardFormData, discount: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" placeholder="50% OFF" /></div>
+                        </>
+                      )}
+
+                      {modalType === 'BRAND' && (
+                        <>
+                            <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Brand Name</label><input type="text" value={brandFormData.name} onChange={e => setBrandFormData({...brandFormData, name: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" /></div>
+                            <div className="space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Logo URL</label><input type="text" value={brandFormData.logo} onChange={e => setBrandFormData({...brandFormData, logo: e.target.value})} className="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl font-bold dark:text-white outline-none focus:border-brand-500 text-sm" /></div>
+                        </>
                       )}
                   </div>
-                  <div className="p-6 md:p-8 bg-slate-50 dark:bg-slate-900/50 border-t border-white/5"><button onClick={handleSaveStaff} className="w-full py-4.5 bg-brand-600 text-white rounded-xl md:rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl active:scale-95 italic hover:bg-brand-500 transition-all flex items-center justify-center gap-2"><Zap size={16}/> {editingStaffId ? 'Sync Node' : 'Initialize Operator'}</button></div>
+                  <div className="p-6 md:p-8 bg-slate-50 dark:bg-slate-900/50 border-t border-white/5">
+                    <button 
+                        onClick={modalType === 'STAFF' ? handleSaveStaff : modalType === 'CATEGORY' ? handleSaveCategory : modalType === 'GIFT_CARD' ? handleSaveGiftCard : handleSaveBrand} 
+                        className="w-full py-4.5 bg-brand-600 text-white rounded-xl md:rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl active:scale-95 italic hover:bg-brand-500 transition-all flex items-center justify-center gap-2"
+                    >
+                        <Zap size={16}/> {editingId ? 'Sync Changes' : 'Initialize Record'}
+                    </button>
+                  </div>
               </div>
           </div>
       )}

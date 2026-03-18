@@ -128,6 +128,21 @@ export interface VendorSettings {
   aiIdentityScanEnabled?: boolean;
 }
 
+export interface GiftCard {
+  id: string;
+  name: string;
+  icon: string;
+  discount: string;
+  vendorId?: string;
+}
+
+export interface Brand {
+  id: string;
+  name: string;
+  logo: string;
+  vendorId?: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -185,6 +200,29 @@ export interface PrinterSettings {
   paperSize: '58mm' | '80mm';
 }
 
+export interface SocialLinks {
+  instagram?: string;
+  facebook?: string;
+  twitter?: string;
+  tiktok?: string;
+  youtube?: string;
+  linkedin?: string;
+}
+
+export interface CustomLink {
+  label: string;
+  url: string;
+}
+
+export interface Banner {
+  id: string;
+  title: string;
+  discount: string;
+  action: string;
+  color: string;
+  image: string;
+}
+
 export interface StoreSettings {
   name: string;
   address: string;
@@ -206,4 +244,11 @@ export interface StoreSettings {
   paymentGateways?: PaymentGatewaySettings;
   printerSettings?: PrinterSettings;
   lowStockThreshold?: number;
+  socialLinks?: SocialLinks;
+  customLinks?: CustomLink[];
+  banners?: Banner[];
+  copyrightText?: string;
+  playStoreUrl?: string;
+  appStoreUrl?: string;
+  homeLayout?: 'default' | 'grid' | 'compact';
 }

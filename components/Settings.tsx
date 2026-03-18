@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { User, StoreSettings, Language, VendorRequest, Product, Sale, UserRole, PaymentGatewaySettings, PrinterSettings } from '../types';
-import { Save, UserPlus, Trash2, Edit2, X, ShieldCheck, Database, HardDrive, User as UserIcon, ChevronLeft, CheckCircle2, AlertCircle, RefreshCw, Upload, Image as ImageIcon, Store, Key, CreditCard, Printer, Bluetooth, Smartphone, Banknote, Globe } from 'lucide-react';
+import { Save, UserPlus, Trash2, Edit2, X, ShieldCheck, Database, HardDrive, User as UserIcon, ChevronLeft, CheckCircle2, AlertCircle, RefreshCw, Upload, Image as ImageIcon, Store, Key, CreditCard, Printer, Bluetooth, Smartphone, Banknote, Globe, Instagram, Facebook, Twitter, Youtube, Linkedin, Plus, Layout } from 'lucide-react';
 
 interface SettingsProps {
   users: User[];
@@ -27,7 +27,7 @@ export const Settings: React.FC<SettingsProps> = ({
   currentUser, storeSettings, onUpdateStoreSettings,
   onGoBack, t, products, sales
 }) => {
-  const [activeTab, setActiveTab] = useState<'store' | 'users' | 'payments' | 'hardware' | 'database'>('store');
+  const [activeTab, setActiveTab] = useState<'store' | 'users' | 'payments' | 'hardware' | 'database' | 'banners'>('store');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userFormData, setUserFormData] = useState<Partial<User>>({
@@ -149,6 +149,7 @@ export const Settings: React.FC<SettingsProps> = ({
             <button onClick={() => setActiveTab('users')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>{t('operatorAccess')}</button>
             <button onClick={() => setActiveTab('payments')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'payments' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>Gateways</button>
             <button onClick={() => setActiveTab('hardware')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'hardware' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>Hardware</button>
+            <button onClick={() => setActiveTab('banners')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'banners' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>{t('banners')}</button>
             <button onClick={() => setActiveTab('database')} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'database' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-md' : 'text-slate-400'}`}>System Data</button>
           </div>
         </div>
@@ -239,6 +240,167 @@ export const Settings: React.FC<SettingsProps> = ({
                     <div className="pt-4 border-t border-slate-50 dark:border-slate-800">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Receipt Footer Message</label>
                         <input type="text" value={storeSettings.footerMessage} onChange={e => onUpdateStoreSettings({...storeSettings, footerMessage: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white text-xs" />
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-50 dark:border-slate-800 space-y-4">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Layout size={20} className="text-indigo-500" />
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('homeLayout')}</h3>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            {(['default', 'grid', 'compact'] as const).map((layout) => (
+                                <button
+                                    key={layout}
+                                    onClick={() => onUpdateStoreSettings({ ...storeSettings, homeLayout: layout })}
+                                    className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${
+                                        (storeSettings.homeLayout || 'default') === layout
+                                            ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/20 text-brand-600'
+                                            : 'border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-200'
+                                    }`}
+                                >
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                        (storeSettings.homeLayout || 'default') === layout ? 'bg-brand-100 dark:bg-brand-900' : 'bg-slate-100 dark:bg-slate-800'
+                                    }`}>
+                                        <Layout size={16} />
+                                    </div>
+                                    <span className="text-[8px] font-black uppercase tracking-widest">{t(`layout${layout.charAt(0).toUpperCase() + layout.slice(1)}`)}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-50 dark:border-slate-800 space-y-4">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Smartphone size={20} className="text-brand-500" />
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">App Download Links</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase">{t('playStoreUrl')}</label>
+                                <input type="text" value={storeSettings.playStoreUrl || ''} onChange={e => onUpdateStoreSettings({...storeSettings, playStoreUrl: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs dark:text-white" placeholder="https://play.google.com/store/apps/..." />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase">{t('appStoreUrl')}</label>
+                                <input type="text" value={storeSettings.appStoreUrl || ''} onChange={e => onUpdateStoreSettings({...storeSettings, appStoreUrl: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs dark:text-white" placeholder="https://apps.apple.com/app/..." />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-50 dark:border-slate-800">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">{t('copyrightText')}</label>
+                        <input type="text" value={storeSettings.copyrightText || ''} onChange={e => onUpdateStoreSettings({...storeSettings, copyrightText: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white text-xs" placeholder="© 2024 easyPOS. All rights reserved." />
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-50 dark:border-slate-800 space-y-4">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Globe size={20} className="text-brand-500" />
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('socialMedia')}</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Instagram size={14} className="text-pink-500" />
+                                    <label className="text-[9px] font-black text-slate-400 uppercase">{t('instagram')}</label>
+                                </div>
+                                <input type="text" value={storeSettings.socialLinks?.instagram || ''} onChange={e => onUpdateStoreSettings({...storeSettings, socialLinks: {...(storeSettings.socialLinks || {}), instagram: e.target.value}})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs dark:text-white" placeholder="https://instagram.com/..." />
+                            </div>
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Facebook size={14} className="text-blue-600" />
+                                    <label className="text-[9px] font-black text-slate-400 uppercase">{t('facebook')}</label>
+                                </div>
+                                <input type="text" value={storeSettings.socialLinks?.facebook || ''} onChange={e => onUpdateStoreSettings({...storeSettings, socialLinks: {...(storeSettings.socialLinks || {}), facebook: e.target.value}})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs dark:text-white" placeholder="https://facebook.com/..." />
+                            </div>
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Twitter size={14} className="text-sky-500" />
+                                    <label className="text-[9px] font-black text-slate-400 uppercase">{t('twitter')}</label>
+                                </div>
+                                <input type="text" value={storeSettings.socialLinks?.twitter || ''} onChange={e => onUpdateStoreSettings({...storeSettings, socialLinks: {...(storeSettings.socialLinks || {}), twitter: e.target.value}})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs dark:text-white" placeholder="https://twitter.com/..." />
+                            </div>
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Youtube size={14} className="text-red-600" />
+                                    <label className="text-[9px] font-black text-slate-400 uppercase">{t('youtube')}</label>
+                                </div>
+                                <input type="text" value={storeSettings.socialLinks?.youtube || ''} onChange={e => onUpdateStoreSettings({...storeSettings, socialLinks: {...(storeSettings.socialLinks || {}), youtube: e.target.value}})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs dark:text-white" placeholder="https://youtube.com/..." />
+                            </div>
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Linkedin size={14} className="text-blue-700" />
+                                    <label className="text-[9px] font-black text-slate-400 uppercase">{t('linkedin')}</label>
+                                </div>
+                                <input type="text" value={storeSettings.socialLinks?.linkedin || ''} onChange={e => onUpdateStoreSettings({...storeSettings, socialLinks: {...(storeSettings.socialLinks || {}), linkedin: e.target.value}})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs dark:text-white" placeholder="https://linkedin.com/..." />
+                            </div>
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Globe size={14} className="text-slate-500" />
+                                    <label className="text-[9px] font-black text-slate-400 uppercase">{t('tiktok')}</label>
+                                </div>
+                                <input type="text" value={storeSettings.socialLinks?.tiktok || ''} onChange={e => onUpdateStoreSettings({...storeSettings, socialLinks: {...(storeSettings.socialLinks || {}), tiktok: e.target.value}})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs dark:text-white" placeholder="https://tiktok.com/@..." />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="pt-6 border-t border-slate-50 dark:border-slate-800 space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                                <Globe size={20} className="text-emerald-500" />
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('customQuickLinks')}</h3>
+                            </div>
+                            <button 
+                                onClick={() => onUpdateStoreSettings({
+                                    ...storeSettings, 
+                                    customLinks: [...(storeSettings.customLinks || []), { label: '', url: '' }]
+                                })}
+                                className="p-2 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 rounded-lg hover:scale-110 transition-transform"
+                            >
+                                <Plus size={16} />
+                            </button>
+                        </div>
+                        <div className="space-y-3">
+                            {(storeSettings.customLinks || []).map((link, index) => (
+                                <div key={index} className="flex gap-3 items-start animate-fade-in-up">
+                                    <div className="flex-1 space-y-1">
+                                        <input 
+                                            type="text" 
+                                            value={link.label} 
+                                            onChange={e => {
+                                                const newLinks = [...(storeSettings.customLinks || [])];
+                                                newLinks[index].label = e.target.value;
+                                                onUpdateStoreSettings({ ...storeSettings, customLinks: newLinks });
+                                            }}
+                                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-[10px] uppercase tracking-widest dark:text-white outline-none focus:border-brand-500/50" 
+                                            placeholder={t('linkLabel')} 
+                                        />
+                                    </div>
+                                    <div className="flex-[2] space-y-1">
+                                        <input 
+                                            type="text" 
+                                            value={link.url} 
+                                            onChange={e => {
+                                                const newLinks = [...(storeSettings.customLinks || [])];
+                                                newLinks[index].url = e.target.value;
+                                                onUpdateStoreSettings({ ...storeSettings, customLinks: newLinks });
+                                            }}
+                                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-[10px] dark:text-white outline-none focus:border-brand-500/50" 
+                                            placeholder={t('linkUrl')} 
+                                        />
+                                    </div>
+                                    <button 
+                                        onClick={() => {
+                                            const newLinks = (storeSettings.customLinks || []).filter((_, i) => i !== index);
+                                            onUpdateStoreSettings({ ...storeSettings, customLinks: newLinks });
+                                        }}
+                                        className="p-3 text-slate-300 hover:text-red-500 transition-colors"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                            {(storeSettings.customLinks || []).length === 0 && (
+                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-center py-4 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl italic">No custom links added yet.</p>
+                            )}
+                        </div>
                     </div>
                   </div>
                   
@@ -619,6 +781,119 @@ export const Settings: React.FC<SettingsProps> = ({
                     <button className="px-10 py-5 bg-rose-600 text-white rounded-3xl font-black uppercase tracking-widest text-[10px] shadow-xl active:scale-95 transition-all">Destroy Local Ledger</button>
                 </div>
              </div>
+          )}
+
+          {activeTab === 'banners' && (
+            <div className="space-y-10 animate-fade-in">
+                <div className="bg-slate-900 text-white p-10 rounded-[3.5rem] shadow-2xl relative overflow-hidden mb-8">
+                    <div className="absolute top-0 right-0 p-12 opacity-10"><ImageIcon size={120} /></div>
+                    <div className="relative z-10 flex flex-col md:flex-row justify-between md:items-center gap-6">
+                        <div>
+                            <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-2">Banners Node</h3>
+                            <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">Active Banners: {(storeSettings.banners || []).length}</p>
+                        </div>
+                        <button 
+                            onClick={() => onUpdateStoreSettings({
+                                ...storeSettings, 
+                                banners: [...(storeSettings.banners || []), { id: `bn_${Date.now()}`, title: '', discount: '', action: '', color: 'from-brand-500 to-indigo-600', image: '' }]
+                            })}
+                            className="px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-2xl active:scale-95 transition-all flex items-center gap-3 italic"
+                        >
+                            <Plus size={18} /> Add Banner
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-8">
+                    {(storeSettings.banners || []).map((banner, index) => (
+                        <div key={banner.id} className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6 relative group">
+                            <button 
+                                onClick={() => {
+                                    const newBanners = (storeSettings.banners || []).filter((_, i) => i !== index);
+                                    onUpdateStoreSettings({ ...storeSettings, banners: newBanners });
+                                }}
+                                className="absolute top-6 right-6 p-3 text-slate-300 hover:text-red-500 transition-colors"
+                            >
+                                <Trash2 size={20} />
+                            </button>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase">{t('bannerTitle')}</label>
+                                        <input type="text" value={banner.title} onChange={e => {
+                                            const newBanners = [...(storeSettings.banners || [])];
+                                            newBanners[index].title = e.target.value;
+                                            onUpdateStoreSettings({ ...storeSettings, banners: newBanners });
+                                        }} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs dark:text-white outline-none focus:border-brand-500/50" placeholder="e.g. Summer Sale" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase">{t('bannerDiscount')}</label>
+                                        <input type="text" value={banner.discount} onChange={e => {
+                                            const newBanners = [...(storeSettings.banners || [])];
+                                            newBanners[index].discount = e.target.value;
+                                            onUpdateStoreSettings({ ...storeSettings, banners: newBanners });
+                                        }} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs dark:text-white outline-none focus:border-brand-500/50" placeholder="e.g. 50% OFF" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase">{t('bannerAction')}</label>
+                                        <input type="text" value={banner.action} onChange={e => {
+                                            const newBanners = [...(storeSettings.banners || [])];
+                                            newBanners[index].action = e.target.value;
+                                            onUpdateStoreSettings({ ...storeSettings, banners: newBanners });
+                                        }} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs dark:text-white outline-none focus:border-brand-500/50" placeholder="e.g. SHOP NOW" />
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase">{t('bannerColor')}</label>
+                                        <input type="text" value={banner.color} onChange={e => {
+                                            const newBanners = [...(storeSettings.banners || [])];
+                                            newBanners[index].color = e.target.value;
+                                            onUpdateStoreSettings({ ...storeSettings, banners: newBanners });
+                                        }} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono text-xs dark:text-white outline-none focus:border-brand-500/50" placeholder="from-brand-500 to-indigo-600" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase">{t('bannerImage')}</label>
+                                        <input type="text" value={banner.image} onChange={e => {
+                                            const newBanners = [...(storeSettings.banners || [])];
+                                            newBanners[index].image = e.target.value;
+                                            onUpdateStoreSettings({ ...storeSettings, banners: newBanners });
+                                        }} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-xs dark:text-white outline-none focus:border-brand-500/50" placeholder="https://..." />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Preview */}
+                            <div className="pt-4 border-t border-slate-50 dark:border-slate-800">
+                                <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Live Preview</label>
+                                <div className={`w-full h-32 rounded-3xl bg-gradient-to-br ${banner.color} p-6 flex flex-col justify-center relative overflow-hidden`}>
+                                    <div className="relative z-10 space-y-1">
+                                        <div className="inline-block px-2 py-0.5 bg-white/20 backdrop-blur-md rounded-full text-[8px] font-black uppercase tracking-widest text-white">
+                                            {banner.title || 'Title'}
+                                        </div>
+                                        <h2 className="text-xl font-black text-white">{banner.discount || 'Discount'}</h2>
+                                        <button className="w-fit px-4 py-1.5 bg-white text-black rounded-lg text-[8px] font-black uppercase tracking-widest">
+                                            {banner.action || 'Action'}
+                                        </button>
+                                    </div>
+                                    {banner.image && <img src={banner.image} alt="" className="absolute right-0 top-0 h-full w-1/2 object-cover opacity-30 mix-blend-overlay" />}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    {(storeSettings.banners || []).length === 0 && (
+                        <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[3.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
+                            <ImageIcon size={48} className="mx-auto text-slate-200 mb-4" />
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No banners configured for this node.</p>
+                        </div>
+                    )}
+                </div>
+                
+                <button onClick={handleSaveStoreSettings} className="w-full py-5 bg-slate-900 dark:bg-brand-600 text-white rounded-3xl font-black uppercase tracking-widest text-xs shadow-xl active:scale-95 flex items-center justify-center gap-3 italic transition-all">
+                    <Save size={20}/> Deploy Banners
+                </button>
+            </div>
           )}
         </div>
       </div>

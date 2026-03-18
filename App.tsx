@@ -20,7 +20,7 @@ import { ShopAccess } from './components/ShopAccess';
 import { CustomerDashboard } from './components/CustomerDashboard';
 import { RoleOverview } from './components/RoleOverview';
 import { ScrollRoll } from './components/ScrollRoll';
-import { AppView, Product, Sale, User, StoreSettings, Language, CartItem, Booking, Category } from './types';
+import { AppView, Product, Sale, User, StoreSettings, Language, CartItem, Booking, Category, GiftCard, Brand } from './types';
 import { translations } from './translations';
 import { Loader2, Menu, Globe, ChevronLeft, LogOut } from 'lucide-react';
 import { db, auth } from './firebase';
@@ -38,6 +38,8 @@ const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [giftCards, setGiftCards] = useState<GiftCard[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('easypos_theme') === 'dark');
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('easypos_language') as Language) || 'en');
@@ -109,6 +111,16 @@ const App: React.FC = () => {
       setCategories(cats);
     });
 
+    const unsubscribeGiftCards = onSnapshot(collection(db, 'giftCards'), (snapshot) => {
+      const gcs = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as GiftCard));
+      setGiftCards(gcs);
+    });
+
+    const unsubscribeBrands = onSnapshot(collection(db, 'brands'), (snapshot) => {
+      const bs = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Brand));
+      setBrands(bs);
+    });
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const email = firebaseUser.email?.toLowerCase() || '';
@@ -150,6 +162,8 @@ const App: React.FC = () => {
       unsubscribeSettings();
       unsubscribeBookings();
       unsubscribeCategories();
+      unsubscribeGiftCards();
+      unsubscribeBrands();
       unsubscribeAuth();
     };
   }, []);
@@ -201,6 +215,56 @@ const App: React.FC = () => {
       await deleteDoc(doc(db, 'categories', id));
     } catch (error) {
       console.error("Error deleting category:", error);
+    }
+  };
+
+  const handleAddGiftCard = async (gc: Omit<GiftCard, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'giftCards'), gc);
+    } catch (error) {
+      console.error("Error adding gift card:", error);
+    }
+  };
+
+  const handleUpdateGiftCard = async (gc: GiftCard) => {
+    try {
+      const { id, ...data } = gc;
+      await updateDoc(doc(db, 'giftCards', id), data as any);
+    } catch (error) {
+      console.error("Error updating gift card:", error);
+    }
+  };
+
+  const handleDeleteGiftCard = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'giftCards', id));
+    } catch (error) {
+      console.error("Error deleting gift card:", error);
+    }
+  };
+
+  const handleAddBrand = async (brand: Omit<Brand, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'brands'), brand);
+    } catch (error) {
+      console.error("Error adding brand:", error);
+    }
+  };
+
+  const handleUpdateBrand = async (brand: Brand) => {
+    try {
+      const { id, ...data } = brand;
+      await updateDoc(doc(db, 'brands', id), data as any);
+    } catch (error) {
+      console.error("Error updating brand:", error);
+    }
+  };
+
+  const handleDeleteBrand = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'brands', id));
+    } catch (error) {
+      console.error("Error deleting brand:", error);
     }
   };
 
@@ -424,11 +488,56 @@ const App: React.FC = () => {
             </header>
         )}
         <div className="flex-1 relative">
-            {currentView === AppView.HOME && <Home language={language} t={t} currentUser={user} onLogout={handleLogout} onLoginRequest={() => setCurrentView(AppView.LOGIN)} storeSettings={storeSettings} onNavigate={navigateTo} products={products} onSeedDemoProducts={seedDemoProducts} toggleLanguage={toggleLanguage} toggleTheme={toggleTheme} isDarkMode={isDarkMode} onUpdateStoreSettings={handleUpdateStoreSettings} />}
+            {currentView === AppView.HOME && <Home 
+              language={language} 
+              t={t} 
+              currentUser={user} 
+              onLogout={handleLogout} 
+              onLoginRequest={() => setCurrentView(AppView.LOGIN)} 
+              storeSettings={storeSettings} 
+              onNavigate={navigateTo} 
+              products={products} 
+              categories={categories}
+              giftCards={giftCards}
+              brands={brands}
+              onSeedDemoProducts={seedDemoProducts} 
+              toggleLanguage={toggleLanguage} 
+              toggleTheme={toggleTheme} 
+              isDarkMode={isDarkMode} 
+              onUpdateStoreSettings={handleUpdateStoreSettings} 
+            />}
             {currentView === AppView.SHOP_ACCESS && <ShopAccess language={language} t={t} onVerify={handleShopVerify} initialCode={shopCode || ''} />}
             {currentView === AppView.CUSTOMER_DASHBOARD && user && <CustomerDashboard currentUser={user} language={language} t={t} sales={sales} storeSettings={storeSettings} onGoBack={handleGoBack} />}
             {currentView === AppView.CUSTOMER_PORTAL && <CustomerPortal products={products} language={language} t={t} currentUser={user} onLoginRequest={() => navigateTo(AppView.LOGIN)} onLogout={handleLogout} onUpdateAvatar={() => {}} storeSettings={storeSettings} toggleLanguage={toggleLanguage} toggleTheme={toggleTheme} isDarkMode={isDarkMode} onUpdateStoreSettings={handleUpdateStoreSettings} onNavigate={navigateTo} />}
-            {currentView === AppView.VENDOR_PANEL && <VendorPanel products={products} sales={sales} users={users} currentUser={user!} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onBulkUpdateProduct={() => {}} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} language={language} t={t} onGoBack={handleGoBack} storeSettings={storeSettings} />}
+            {currentView === AppView.VENDOR_PANEL && <VendorPanel 
+              products={products} 
+              sales={sales} 
+              users={users} 
+              categories={categories}
+              giftCards={giftCards}
+              brands={brands}
+              currentUser={user!} 
+              onAddProduct={handleAddProduct} 
+              onUpdateProduct={handleUpdateProduct} 
+              onDeleteProduct={handleDeleteProduct} 
+              onBulkUpdateProduct={() => {}} 
+              onAddUser={handleAddUser} 
+              onUpdateUser={handleUpdateUser} 
+              onDeleteUser={handleDeleteUser} 
+              onAddCategory={handleAddCategory}
+              onUpdateCategory={handleUpdateCategory}
+              onDeleteCategory={handleDeleteCategory}
+              onAddGiftCard={handleAddGiftCard}
+              onUpdateGiftCard={handleUpdateGiftCard}
+              onDeleteGiftCard={handleDeleteGiftCard}
+              onAddBrand={handleAddBrand}
+              onUpdateBrand={handleUpdateBrand}
+              onDeleteBrand={handleDeleteBrand}
+              language={language} 
+              t={t} 
+              onGoBack={handleGoBack} 
+              storeSettings={storeSettings} 
+            />}
             {currentView === AppView.POS && <POS products={products} sales={sales} onCheckout={handleCheckout} storeSettings={storeSettings} onViewOrderHistory={() => navigateTo(AppView.ORDERS)} onUpdateStoreSettings={handleUpdateStoreSettings} t={t} language={language} currentUser={user!} onGoBack={handleGoBack} />}
             {currentView === AppView.INVENTORY && <Inventory 
               products={products} 

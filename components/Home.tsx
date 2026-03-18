@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, ShoppingCart, MessageCircle, Wallet, Compass, Home as HomeIcon, ChevronLeft, ChevronRight, Globe, User as UserIcon, LogOut, ShieldCheck, Truck, Headphones, Zap, Camera, Scan, X, Loader2, Database, Shield } from 'lucide-react';
-import { Language, User, StoreSettings, Product, AppView } from '../types';
+import { Search, MapPin, ShoppingCart, MessageCircle, Wallet, Compass, Home as HomeIcon, ChevronLeft, ChevronRight, Globe, User as UserIcon, LogOut, ShieldCheck, Truck, Headphones, Zap, Camera, Scan, X, Loader2, Database, Shield, Tag, Instagram, Facebook, Twitter, Youtube, Linkedin } from 'lucide-react';
+import { Language, User, StoreSettings, Product, AppView, Category, GiftCard, Brand } from '../types';
 import { formatCurrency } from '../utils/format';
 import { GoogleGenAI } from "@google/genai";
 import { Html5QrcodeScanner } from 'html5-qrcode';
@@ -15,6 +15,9 @@ interface HomeProps {
   storeSettings: StoreSettings;
   onNavigate: (view: AppView) => void;
   products: Product[];
+  categories: Category[];
+  giftCards: GiftCard[];
+  brands: Brand[];
   onSeedDemoProducts?: () => void;
   toggleLanguage: () => void;
   toggleTheme: () => void;
@@ -31,6 +34,9 @@ export const Home: React.FC<HomeProps> = ({
   storeSettings,
   onNavigate,
   products,
+  categories,
+  giftCards,
+  brands,
   onSeedDemoProducts,
   toggleLanguage,
   toggleTheme,
@@ -126,9 +132,9 @@ export const Home: React.FC<HomeProps> = ({
     }
   }, [t]);
 
-  const banners = [
+  const banners = (storeSettings.banners && storeSettings.banners.length > 0) ? storeSettings.banners : [
     {
-      id: 1,
+      id: '1',
       title: "Canva Pro",
       discount: "Flat 80% OFF",
       action: "SUBSCRIBE NOW",
@@ -136,7 +142,7 @@ export const Home: React.FC<HomeProps> = ({
       image: "https://picsum.photos/seed/canva/800/400"
     },
     {
-      id: 2,
+      id: '2',
       title: "Zomato Gold",
       discount: "Buy 1 Get 1 Free",
       action: "BUY NOW",
@@ -145,7 +151,7 @@ export const Home: React.FC<HomeProps> = ({
     }
   ];
 
-  const favouriteBrands = [
+  const displayBrands = brands.length > 0 ? brands.map(b => ({ name: b.name, icon: b.logo, discount: 'NEW' })) : [
     { name: 'YouTube', icon: 'https://cdn-icons-png.flaticon.com/512/1384/1384060.png', discount: '70% OFF' },
     { name: 'Netflix', icon: 'https://cdn-icons-png.flaticon.com/512/5977/5977590.png', discount: '50% OFF' },
     { name: 'Spotify', icon: 'https://cdn-icons-png.flaticon.com/512/174/174872.png', discount: '60% OFF' },
@@ -154,13 +160,19 @@ export const Home: React.FC<HomeProps> = ({
     { name: 'Apple', icon: 'https://cdn-icons-png.flaticon.com/512/0/747.png', discount: '20% OFF' },
   ];
 
-  const giftCardCategories = [
-    { name: t('food'), icon: '🍔', color: 'bg-orange-500/20' },
-    { name: t('entertainment'), icon: '🎬', color: 'bg-purple-500/20' },
-    { name: t('fashion'), icon: '👗', color: 'bg-pink-500/20' },
-    { name: t('homeNeeds'), icon: '🏠', color: 'bg-blue-500/20' },
-    { name: t('healthcare'), icon: '🏥', color: 'bg-green-500/20' },
-    { name: t('news'), icon: '📰', color: 'bg-yellow-500/20' },
+  const displayGiftCards = giftCards.length > 0 ? giftCards : [
+    { id: '1', name: t('food'), icon: '🍔', discount: '10% OFF', vendorId: 'demo' },
+    { id: '2', name: t('entertainment'), icon: '🎬', discount: '15% OFF', vendorId: 'demo' },
+    { id: '3', name: t('fashion'), icon: '👗', discount: '20% OFF', vendorId: 'demo' },
+    { id: '4', name: t('homeNeeds'), icon: '🏠', discount: '5% OFF', vendorId: 'demo' },
+    { id: '5', name: t('healthcare'), icon: '🏥', discount: '12% OFF', vendorId: 'demo' },
+    { id: '6', name: t('news'), icon: '📰', discount: '8% OFF', vendorId: 'demo' },
+  ];
+
+  const displayCategories = categories.length > 0 ? categories : [
+    { id: '1', name: 'Electronics', description: '', icon: '💻', color: 'bg-blue-500/20' },
+    { id: '2', name: 'Fashion', description: '', icon: '👕', color: 'bg-pink-500/20' },
+    { id: '3', name: 'Home', description: '', icon: '🏠', color: 'bg-green-500/20' },
   ];
 
   const featuredProducts = products.slice(0, 8);
@@ -195,10 +207,16 @@ export const Home: React.FC<HomeProps> = ({
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate(AppView.HOME)}>
-              <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 bg-white rounded-sm rotate-45"></div>
-              </div>
-              <span className="text-xl font-bold tracking-tighter">easyPOS</span>
+              {storeSettings.logo ? (
+                <img src={storeSettings.logo} alt={storeSettings.name} className="h-8 w-auto object-contain" />
+              ) : (
+                <>
+                  <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
+                    <div className="w-4 h-4 bg-white rounded-sm rotate-45"></div>
+                  </div>
+                  <span className="text-xl font-bold tracking-tighter">{storeSettings.name || 'easyPOS'}</span>
+                </>
+              )}
             </div>
 
             <nav className={`hidden xl:flex items-center gap-6 text-xs font-bold ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
@@ -298,56 +316,114 @@ export const Home: React.FC<HomeProps> = ({
       </header>
 
       <main className="max-w-screen-2xl mx-auto px-4 lg:px-8 py-6 space-y-12">
-        {/* Carousel */}
-        <div className="relative group">
-          <div className="flex gap-4 overflow-hidden rounded-[2rem]">
-            {banners.map((banner, idx) => (
+        {/* Carousel / Layout Logic */}
+        {storeSettings.homeLayout === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {banners.map((banner) => (
               <div 
                 key={banner.id}
-                className={`min-w-full h-64 lg:h-96 rounded-[2rem] bg-gradient-to-br ${banner.color} p-8 lg:p-12 flex flex-col justify-center relative overflow-hidden transition-all duration-700 ease-in-out`}
-                style={{ transform: `translateX(-${activeBanner * 100}%)` }}
+                className={`h-64 rounded-[2rem] bg-gradient-to-br ${banner.color} p-8 flex flex-col justify-center relative overflow-hidden transition-all hover:scale-[1.02] duration-300`}
               >
-                <div className="relative z-10 space-y-4 max-w-md">
-                  <div className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest">
+                <div className="relative z-10 space-y-3 max-w-[60%]">
+                  <div className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[8px] font-black uppercase tracking-widest">
                     {banner.title}
                   </div>
-                  <h2 className="text-4xl lg:text-6xl font-black leading-tight">{banner.discount}</h2>
-                  <button className="w-fit px-8 py-3 bg-white text-black rounded-xl text-xs font-black shadow-xl hover:scale-105 transition-all uppercase tracking-widest">
+                  <h2 className="text-2xl lg:text-3xl font-black leading-tight">{banner.discount}</h2>
+                  <button className="w-fit px-6 py-2 bg-white text-black rounded-xl text-[10px] font-black shadow-xl hover:scale-105 transition-all uppercase tracking-widest">
                     {banner.action}
                   </button>
                 </div>
-                <img src={banner.image} alt="" className="absolute right-0 top-0 h-full w-2/3 object-cover opacity-30 mix-blend-overlay" />
-                
-                {/* Decorative elements */}
-                <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-                <div className="absolute -top-12 -left-12 w-48 h-48 bg-black/10 rounded-full blur-2xl"></div>
+                <img src={banner.image} alt="" className="absolute right-0 top-0 h-full w-1/2 object-cover opacity-30 mix-blend-overlay" />
               </div>
             ))}
           </div>
-          
-          <button 
-            onClick={() => setActiveBanner(prev => Math.max(0, prev - 1))}
-            className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center hover:bg-black/50 transition-all opacity-0 group-hover:opacity-100"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button 
-            onClick={() => setActiveBanner(prev => Math.min(banners.length - 1, prev + 1))}
-            className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center hover:bg-black/50 transition-all opacity-0 group-hover:opacity-100"
-          >
-            <ChevronRight size={20} />
-          </button>
-
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-            {banners.map((_, idx) => (
-              <button 
-                key={idx}
-                onClick={() => setActiveBanner(idx)}
-                className={`h-1.5 rounded-full transition-all ${activeBanner === idx ? 'w-8 bg-white' : 'w-2 bg-white/30'}`}
-              />
+        ) : storeSettings.homeLayout === 'compact' ? (
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
+            {banners.map((banner) => (
+              <div 
+                key={banner.id}
+                className={`min-w-[300px] h-48 rounded-3xl bg-gradient-to-br ${banner.color} p-6 flex flex-col justify-center relative overflow-hidden snap-center`}
+              >
+                <div className="relative z-10 space-y-2">
+                  <div className="inline-block px-2 py-0.5 bg-white/20 backdrop-blur-md rounded-full text-[7px] font-black uppercase tracking-widest">
+                    {banner.title}
+                  </div>
+                  <h2 className="text-xl font-black leading-tight">{banner.discount}</h2>
+                  <button className="w-fit px-4 py-1.5 bg-white text-black rounded-lg text-[8px] font-black shadow-lg uppercase tracking-widest">
+                    {banner.action}
+                  </button>
+                </div>
+                <img src={banner.image} alt="" className="absolute right-0 top-0 h-full w-1/2 object-cover opacity-20 mix-blend-overlay" />
+              </div>
             ))}
           </div>
-        </div>
+        ) : (
+          <div className="relative group">
+            <div className="flex gap-4 overflow-hidden rounded-[2rem]">
+              {banners.map((banner, idx) => (
+                <div 
+                  key={banner.id}
+                  className={`min-w-full h-64 lg:h-96 rounded-[2rem] bg-gradient-to-br ${banner.color} p-8 lg:p-12 flex flex-col justify-center relative overflow-hidden transition-all duration-700 ease-in-out`}
+                  style={{ transform: `translateX(-${activeBanner * 100}%)` }}
+                >
+                  <div className="relative z-10 space-y-4 max-w-md">
+                    <div className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest">
+                      {banner.title}
+                    </div>
+                    <h2 className="text-4xl lg:text-6xl font-black leading-tight">{banner.discount}</h2>
+                    <button className="w-fit px-8 py-3 bg-white text-black rounded-xl text-xs font-black shadow-xl hover:scale-105 transition-all uppercase tracking-widest">
+                      {banner.action}
+                    </button>
+                  </div>
+                  <img src={banner.image} alt="" className="absolute right-0 top-0 h-full w-2/3 object-cover opacity-30 mix-blend-overlay" />
+                  
+                  {/* Decorative elements */}
+                  <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                  <div className="absolute -top-12 -left-12 w-48 h-48 bg-black/10 rounded-full blur-2xl"></div>
+                </div>
+              ))}
+            </div>
+            
+            <button 
+              onClick={() => setActiveBanner(prev => Math.max(0, prev - 1))}
+              className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center hover:bg-black/50 transition-all opacity-0 group-hover:opacity-100"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button 
+              onClick={() => setActiveBanner(prev => Math.min(banners.length - 1, prev + 1))}
+              className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center hover:bg-black/50 transition-all opacity-0 group-hover:opacity-100"
+            >
+              <ChevronRight size={20} />
+            </button>
+
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+              {banners.map((_, idx) => (
+                <button 
+                  key={idx}
+                  onClick={() => setActiveBanner(idx)}
+                  className={`h-1.5 rounded-full transition-all ${activeBanner === idx ? 'w-8 bg-white' : 'w-2 bg-white/30'}`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Categories Grid */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold uppercase tracking-widest">{t('allCategories')}</h3>
+            <button onClick={() => onNavigate(AppView.CUSTOMER_PORTAL)} className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            {displayCategories.map((cat) => (
+              <div key={cat.id} className={`${cat.color || 'bg-slate-100 dark:bg-slate-800'} border border-white/5 rounded-2xl p-4 hover:border-brand-500/50 transition-all cursor-pointer group text-center`}>
+                <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">{cat.icon || <Tag size={16}/>}</div>
+                <p className="font-bold text-[10px] uppercase tracking-widest truncate">{cat.name}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* Favourite Brands */}
         <section>
@@ -356,15 +432,15 @@ export const Home: React.FC<HomeProps> = ({
             <button className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
           </div>
           <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
-            {favouriteBrands.map((brand, idx) => (
+            {displayBrands.map((brand, idx) => (
               <div key={idx} className="flex flex-col items-center gap-3 min-w-[100px] group cursor-pointer">
-                <div className="w-20 h-20 bg-zinc-900 border border-white/5 rounded-full p-4 group-hover:border-brand-500/50 transition-all relative">
+                <div className="w-20 h-20 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-full p-4 group-hover:border-brand-500/50 transition-all relative shadow-sm">
                   <img src={brand.icon} alt={brand.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform" />
-                  <div className="absolute -top-1 -right-1 bg-brand-500 text-[8px] font-black px-1.5 py-0.5 rounded-full">
+                  <div className="absolute -top-1 -right-1 bg-brand-500 text-[8px] font-black px-1.5 py-0.5 rounded-full text-white">
                     {brand.discount}
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-zinc-400 group-hover:text-white">{brand.name}</span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 group-hover:text-brand-500 transition-colors">{brand.name}</span>
               </div>
             ))}
           </div>
@@ -377,10 +453,17 @@ export const Home: React.FC<HomeProps> = ({
             <button className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {giftCardCategories.map((cat, idx) => (
-              <div key={idx} className={`${cat.color} border border-white/5 rounded-2xl p-5 hover:border-white/20 transition-all cursor-pointer group text-center`}>
-                <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{cat.icon}</div>
-                <p className="font-bold text-xs uppercase tracking-widest">{cat.name}</p>
+            {displayGiftCards.map((gc) => (
+              <div key={gc.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl p-5 hover:border-brand-500/50 transition-all cursor-pointer group text-center shadow-sm">
+                <div className="w-12 h-12 mx-auto mb-3 group-hover:scale-110 transition-transform flex items-center justify-center">
+                    {gc.icon.startsWith('http') ? (
+                        <img src={gc.icon} alt={gc.name} className="w-full h-full object-contain" />
+                    ) : (
+                        <span className="text-3xl">{gc.icon}</span>
+                    )}
+                </div>
+                <p className="font-bold text-xs uppercase tracking-widest dark:text-white">{gc.name}</p>
+                <p className="text-[9px] font-black text-brand-500 uppercase tracking-widest mt-1 italic">{gc.discount}</p>
               </div>
             ))}
           </div>
@@ -532,7 +615,37 @@ export const Home: React.FC<HomeProps> = ({
               {t('copyright')} {t('poweredBy')}
             </p>
             <div className="flex gap-4">
-              {['Instagram', 'Twitter', 'LinkedIn'].map(social => (
+              {storeSettings.socialLinks?.instagram && (
+                <a href={storeSettings.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-500 hover:text-pink-500 hover:bg-zinc-800 transition-all">
+                  <Instagram size={14} />
+                </a>
+              )}
+              {storeSettings.socialLinks?.facebook && (
+                <a href={storeSettings.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-500 hover:text-blue-600 hover:bg-zinc-800 transition-all">
+                  <Facebook size={14} />
+                </a>
+              )}
+              {storeSettings.socialLinks?.twitter && (
+                <a href={storeSettings.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-500 hover:text-sky-500 hover:bg-zinc-800 transition-all">
+                  <Twitter size={14} />
+                </a>
+              )}
+              {storeSettings.socialLinks?.youtube && (
+                <a href={storeSettings.socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-500 hover:text-red-600 hover:bg-zinc-800 transition-all">
+                  <Youtube size={14} />
+                </a>
+              )}
+              {storeSettings.socialLinks?.linkedin && (
+                <a href={storeSettings.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-500 hover:text-blue-700 hover:bg-zinc-800 transition-all">
+                  <Linkedin size={14} />
+                </a>
+              )}
+              {storeSettings.socialLinks?.tiktok && (
+                <a href={storeSettings.socialLinks.tiktok} target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all">
+                  <Globe size={14} />
+                </a>
+              )}
+              {!storeSettings.socialLinks && ['Instagram', 'Twitter', 'LinkedIn'].map(social => (
                 <button key={social} className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all">
                   <Globe size={14} />
                 </button>
@@ -560,16 +673,36 @@ export const Home: React.FC<HomeProps> = ({
             </ul>
           </div>
 
-          <div className="space-y-6">
-            <h4 className="font-black text-xs uppercase tracking-widest text-brand-500">{t('downloadApp')}</h4>
-            <div className="flex flex-col gap-3">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" className="h-9 w-fit cursor-pointer hover:opacity-80 transition-opacity" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" className="h-9 w-fit cursor-pointer hover:opacity-80 transition-opacity" />
+          {(storeSettings.customLinks && storeSettings.customLinks.length > 0) ? (
+            <div className="space-y-6">
+              <h4 className="font-black text-xs uppercase tracking-widest text-brand-500">{t('quickLinks')}</h4>
+              <ul className="text-[10px] font-bold text-zinc-500 space-y-4 uppercase tracking-widest">
+                {storeSettings.customLinks.map((link, idx) => (
+                  <li key={idx}>
+                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">{link.label}</a>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-6">
+              <h4 className="font-black text-xs uppercase tracking-widest text-brand-500">{t('downloadApp')}</h4>
+              <div className="flex flex-col gap-3">
+                <a href={storeSettings.playStoreUrl || '#'} target="_blank" rel="noopener noreferrer">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" className="h-9 w-fit cursor-pointer hover:opacity-80 transition-opacity" />
+                </a>
+                <a href={storeSettings.appStoreUrl || '#'} target="_blank" rel="noopener noreferrer">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" className="h-9 w-fit cursor-pointer hover:opacity-80 transition-opacity" />
+                </a>
+              </div>
+            </div>
+          )}
         </div>
         
         <div className="max-w-screen-2xl mx-auto pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+            {storeSettings.copyrightText || `© ${new Date().getFullYear()} ${storeSettings.name || 'easyPOS'}. All rights reserved.`}
+          </div>
           <div className="flex items-center gap-4 bg-zinc-900 border border-white/5 rounded-xl px-4 py-2.5 w-full md:w-auto">
             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{t('suggestSubscription')}</span>
             <input type="text" placeholder={t('submitFavourite')} className="bg-transparent text-[10px] outline-none flex-1 md:w-48 font-bold" />
