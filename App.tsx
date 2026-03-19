@@ -26,7 +26,8 @@ import { GiftCardsPage } from './components/GiftCardsPage';
 import { CategoriesPageView } from './components/CategoriesPageView';
 import { Cart } from './components/Cart';
 import { Checkout } from './components/Checkout';
-import { AppView, Product, Sale, User, StoreSettings, Language, CartItem, Booking, Category, GiftCard, Brand, LegalPage } from './types';
+import { AdminPanel } from './components/AdminPanel';
+import { AppView, Product, Sale, User, StoreSettings, Language, CartItem, Booking, Category, GiftCard, Brand, LegalPage, PremiumPlan } from './types';
 import { translations } from './translations';
 import { Loader2, Menu, Globe, ChevronLeft, LogOut } from 'lucide-react';
 import { db, auth } from './firebase';
@@ -49,6 +50,7 @@ const App: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [giftCards, setGiftCards] = useState<GiftCard[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [premiumPlans, setPremiumPlans] = useState<PremiumPlan[]>([]);
   
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('easypos_theme') === 'dark');
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('easypos_language') as Language) || 'en');
@@ -77,7 +79,7 @@ const App: React.FC = () => {
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
-    if (loggedInUser.role === 'ADMIN') setCurrentView(AppView.POS);
+    if (loggedInUser.role === 'ADMIN') setCurrentView(AppView.ADMIN_PANEL);
     else if (loggedInUser.role === 'VENDOR') setCurrentView(AppView.VENDOR_PANEL);
     else setCurrentView(AppView.HOME);
   };
@@ -131,6 +133,11 @@ const App: React.FC = () => {
       setBrands(bs);
     });
 
+    const unsubscribePremiumPlans = onSnapshot(collection(db, 'premium_plans'), (snapshot) => {
+      const plans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PremiumPlan));
+      setPremiumPlans(plans);
+    });
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const email = firebaseUser.email?.toLowerCase() || '';
@@ -150,7 +157,7 @@ const App: React.FC = () => {
         // Optionally save/update profile in Firestore
         await setDoc(doc(db, 'profiles', firebaseUser.uid), userProfile, { merge: true });
         
-        if (isAdmin) setCurrentView(AppView.POS);
+        if (isAdmin) setCurrentView(AppView.ADMIN_PANEL);
         else if (userProfile.role === 'VENDOR') setCurrentView(AppView.VENDOR_PANEL);
         else setCurrentView(AppView.HOME);
       } else {
@@ -174,6 +181,7 @@ const App: React.FC = () => {
       unsubscribeCategories();
       unsubscribeGiftCards();
       unsubscribeBrands();
+      unsubscribePremiumPlans();
       unsubscribeAuth();
     };
   }, []);
@@ -278,6 +286,31 @@ const App: React.FC = () => {
     }
   };
 
+  const handleAddPremiumPlan = async (plan: Omit<PremiumPlan, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'premium_plans'), plan);
+    } catch (error) {
+      console.error("Error adding premium plan:", error);
+    }
+  };
+
+  const handleUpdatePremiumPlan = async (plan: PremiumPlan) => {
+    try {
+      const { id, ...data } = plan;
+      await updateDoc(doc(db, 'premium_plans', id), data as any);
+    } catch (error) {
+      console.error("Error updating premium plan:", error);
+    }
+  };
+
+  const handleDeletePremiumPlan = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'premium_plans', id));
+    } catch (error) {
+      console.error("Error deleting premium plan:", error);
+    }
+  };
+
   const handleCheckout = async (items: CartItem[], total: number, paymentMethod: 'CASH' | 'CARD', subTotal: number, discount: number, tax: number, discountType: 'fixed' | 'percent', customerName?: string, customerPhone?: string) => {
     const sale: Sale = {
       id: Date.now().toString(),
@@ -309,13 +342,13 @@ const App: React.FC = () => {
 
 
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
-    name: 'AI Identity Scan',
+    name: 'easyPOS',
     address: 'Main Street, City',
     phone: '+1 234 567 890',
-    email: 'support@ai-identity-scan.io',
+    email: 'support@easypos.io',
     currency: 'USD',
     taxRate: 0,
-    logo: 'https://images.unsplash.com/photo-1633409302455-582aba7965e4?auto=format&fit=crop&q=80&w=200',
+    logo: 'https://picsum.photos/seed/pos/200/200',
     receiptFooter: 'Thank you for your business!',
     barcodePrefix: 'EP',
     lowStockThreshold: 10
@@ -369,9 +402,10 @@ const App: React.FC = () => {
     setIsDarkMode(prev => !prev);
   };
 
-  const handleAddUser = async (u: User) => {
+  const handleAddUser = async (u: Omit<User, 'id'>) => {
     try {
-      await setDoc(doc(db, 'profiles', u.id), u);
+      const id = Date.now().toString(); // Simple ID generation
+      await setDoc(doc(db, 'profiles', id), { ...u, id });
     } catch (error) {
       console.error("Error adding user:", error);
     }
@@ -495,6 +529,7 @@ const App: React.FC = () => {
       case AppView.PRINT_BARCODE: return t('printBarcode');
       case AppView.CATEGORIES: return t('categoryList');
       case AppView.ROLE_OVERVIEW: return t('roleOverview');
+      case AppView.ADMIN_PANEL: return t('adminPanel');
       default: return 'System';
     }
   };
@@ -582,6 +617,7 @@ const App: React.FC = () => {
               t={t} 
               onGoBack={handleGoBack} 
               storeSettings={storeSettings} 
+              premiumPlans={premiumPlans}
             />}
             {currentView === AppView.POS && <POS products={products} sales={sales} onCheckout={handleCheckout} storeSettings={storeSettings} onViewOrderHistory={() => navigateTo(AppView.ORDERS)} onUpdateStoreSettings={handleUpdateStoreSettings} t={t} language={language} currentUser={user!} onGoBack={handleGoBack} />}
             {currentView === AppView.INVENTORY && <Inventory 
@@ -655,6 +691,37 @@ const App: React.FC = () => {
                 isDarkMode={isDarkMode} 
                 storeSettings={storeSettings}
                 onCategoryClick={(cat) => navigateTo(AppView.CUSTOMER_PORTAL, { categoryName: cat.name })}
+              />
+            )}
+            {currentView === AppView.ADMIN_PANEL && (
+              <AdminPanel 
+                products={products}
+                sales={sales}
+                storeSettings={storeSettings}
+                categories={categories}
+                giftCards={giftCards}
+                brands={brands}
+                premiumPlans={premiumPlans}
+                users={users}
+                onAddCategory={handleAddCategory}
+                onUpdateCategory={handleUpdateCategory}
+                onDeleteCategory={handleDeleteCategory}
+                onAddGiftCard={handleAddGiftCard}
+                onUpdateGiftCard={handleUpdateGiftCard}
+                onDeleteGiftCard={handleDeleteGiftCard}
+                onAddBrand={handleAddBrand}
+                onUpdateBrand={handleUpdateBrand}
+                onDeleteBrand={handleDeleteBrand}
+                onAddPremiumPlan={handleAddPremiumPlan}
+                onUpdatePremiumPlan={handleUpdatePremiumPlan}
+                onDeletePremiumPlan={handleDeletePremiumPlan}
+                onAddUser={handleAddUser}
+                onUpdateUser={handleUpdateUser}
+                onDeleteUser={handleDeleteUser}
+                language={language}
+                t={t}
+                onGoBack={handleGoBack}
+                currentUser={user!}
               />
             )}
         </div>

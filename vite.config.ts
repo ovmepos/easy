@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
@@ -13,10 +15,10 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 // 5MB
       },
       manifest: {
-        name: 'AI Identity Scan',
-        short_name: 'AI Identity Scan',
-        description: 'Offline-capable Point of Sale System',
-        theme_color: '#0ea5e9',
+        name: 'GiftCard Hub',
+        short_name: 'GiftCardHub',
+        description: 'Premium Gift Card Platform',
+        theme_color: '#000000',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -33,7 +35,6 @@ export default defineConfig({
     })
   ],
   define: {
-    // This allows the app to access the API_KEY from Vercel Environment Variables
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY),
     'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY)
   }

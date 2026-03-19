@@ -64,7 +64,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
     });
   }, [products, searchTerm, selectedCategory, selectedBrand]);
 
-  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const cartCount = (cart || []).reduce((acc, item) => acc + item.quantity, 0);
 
   const needsAvatarSetup = storeSettings.aiIdentityScanEnabled && currentUser && !currentUser.customerAvatar && !showAvatarSetup;
 
@@ -111,7 +111,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
               <div className="bg-brand-600 p-2 rounded-xl shadow-lg shadow-brand-600/20">
                 <ShoppingBag className="text-white" size={20} />
               </div>
-              <h1 className="text-lg font-black italic uppercase tracking-tighter dark:text-white">AI Identity Scan <span className="text-brand-600">Shop</span></h1>
+              <h1 className="text-lg font-black italic uppercase tracking-tighter dark:text-white">easyPOS <span className="text-brand-600">Shop</span></h1>
             </div>
 
             <nav className="hidden xl:flex items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">

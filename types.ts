@@ -31,7 +31,18 @@ export enum AppView {
   ALL_CATEGORIES = 'ALL_CATEGORIES',
   GIFT_CARDS = 'GIFT_CARDS',
   CART = 'CART',
-  CHECKOUT = 'CHECKOUT'
+  CHECKOUT = 'CHECKOUT',
+  ADMIN_PANEL = 'ADMIN_PANEL'
+}
+
+export interface PremiumPlan {
+  id: string;
+  name: string;
+  price: number;
+  duration: string; // e.g., 'Monthly', 'Yearly'
+  features: string[];
+  isPopular?: boolean;
+  avatarUrl?: string; // For AI Avatar
 }
 
 export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CASHIER' | 'CUSTOMER' | 'VENDOR' | 'VENDOR_STAFF';

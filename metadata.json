@@ -1,6 +1,6 @@
 {
-  "name": "AI Identity Scan",
-  "description": "Smart Point of Sale & E-commerce Solution with AI Identity Scan technology.",
+  "name": "GiftCard Hub",
+  "description": "A premium platform for managing and purchasing gift cards from your favorite brands, featuring AI Identity Scan for secure transactions.",
   "requestFramePermissions": [
     "camera",
     "microphone",

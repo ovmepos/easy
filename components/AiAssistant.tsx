@@ -57,23 +57,23 @@ export const AiAssistant: React.FC<AiAssistantProps> = ({
       
       // Prepare localized business summary for context
       const today = new Date().setHours(0,0,0,0);
-      const todaySales = sales.filter(s => s.timestamp >= today);
+      const todaySales = (sales || []).filter(s => s.timestamp >= today);
       
       const contextSummary = {
         storeName: storeSettings.name,
         currency: CURRENCY,
         currentUser: { name: currentUser.name, role: currentUser.role },
         inventorySummary: {
-          totalProducts: products.length,
-          totalStock: products.reduce((acc, p) => acc + p.stock, 0),
-          lowStockItems: products.filter(p => p.stock < 10).map(p => ({ name: p.name, stock: p.stock })),
-          topExpensive: products.sort((a,b) => b.sellPrice - a.sellPrice).slice(0, 3).map(p => p.name)
+          totalProducts: (products || []).length,
+          totalStock: (products || []).reduce((acc, p) => acc + (p.stock || 0), 0),
+          lowStockItems: (products || []).filter(p => p.stock < 10).map(p => ({ name: p.name, stock: p.stock })),
+          topExpensive: [...(products || [])].sort((a,b) => b.sellPrice - a.sellPrice).slice(0, 3).map(p => p.name)
         },
         salesSummary: {
-          todayRevenue: todaySales.reduce((acc, s) => acc + s.total, 0),
+          todayRevenue: todaySales.reduce((acc, s) => acc + (s.total || 0), 0),
           todayCount: todaySales.length,
-          totalRevenue: sales.reduce((acc, s) => acc + s.total, 0),
-          lastSale: sales.length > 0 ? { id: sales[0].id, total: sales[0].total, time: new Date(sales[0].timestamp).toLocaleTimeString() } : null
+          totalRevenue: (sales || []).reduce((acc, s) => acc + (s.total || 0), 0),
+          lastSale: (sales || []).length > 0 ? { id: sales[0].id, total: sales[0].total, time: new Date(sales[0].timestamp).toLocaleTimeString() } : null
         },
         recentProducts: products.slice(0, 10).map(p => ({ name: p.name, sku: p.sku, price: p.sellPrice, stock: p.stock }))
       };

@@ -68,8 +68,8 @@ export const ClawdBot: React.FC<ClawdBotProps> = ({ products, sales, storeSettin
 
   const getSystemInstruction = () => {
       const today = new Date().setHours(0,0,0,0);
-      const todaySales = sales.filter(s => s.timestamp >= today);
-      const totalRev = todaySales.reduce((a,s)=>a+s.total,0);
+      const todaySales = (sales || []).filter(s => s.timestamp >= today);
+      const totalRev = todaySales.reduce((a,s)=>a+(s.total || 0),0);
       
       return `You are easyPOS Artificial Intelligence (Terminal Protocol v2.5). 
       You are speaking to ${currentUser.name}. 

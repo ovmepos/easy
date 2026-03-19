@@ -11,9 +11,9 @@ export const generateBusinessInsight = async (sales: Sale[], products: Product[]
     const lowStock = products.filter(p => p.stock < 10).map(p => p.name);
     
     const summary = {
-      totalRevenue: sales.reduce((acc, s) => acc + s.total, 0),
-      todayRevenue: todaySales.reduce((acc, s) => acc + s.total, 0),
-      totalTransactions: sales.length,
+      totalRevenue: (sales || []).reduce((acc, s) => acc + (s.total || 0), 0),
+      todayRevenue: (todaySales || []).reduce((acc, s) => acc + (s.total || 0), 0),
+      totalTransactions: (sales || []).length,
       lowStockItems: lowStock,
     };
 

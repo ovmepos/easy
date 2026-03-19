@@ -101,11 +101,11 @@ export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, lan
     const operators = Object.values(operatorPerformance).sort((a, b) => b.sales - a.sales);
 
     // Specific "Today" metrics for quick check
-    const todaySales = sales.filter(s => s.timestamp >= todayTimestamp);
-    const todayRevenue = todaySales.reduce((a, s) => a + s.total, 0);
+    const todaySales = (sales || []).filter(s => s.timestamp >= todayTimestamp);
+    const todayRevenue = todaySales.reduce((a, s) => a + (s.total || 0), 0);
     const todayProfit = todaySales.reduce((a, s) => {
-        const cost = s.items.reduce((acc, i) => acc + ((products.find(p => p.id === i.id)?.costPrice || 0) * i.quantity), 0);
-        return a + (s.total - cost);
+        const cost = (s.items || []).reduce((acc, i) => acc + ((products.find(p => p.id === i.id)?.costPrice || 0) * i.quantity), 0);
+        return a + ((s.total || 0) - cost);
     }, 0);
 
     return { 
@@ -216,14 +216,14 @@ export const Reports: React.FC<ReportsProps> = ({ sales, products, onGoBack, lan
                             <tr><th className="p-8">Timestamp</th><th className="p-8">Order ID</th><th className="p-8 text-right">Revenue</th><th className="p-8 text-right">Profit</th></tr>
                           </thead>
                           <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                              {stats.filteredSales.map(s => {
-                                const cost = s.items.reduce((acc, i) => acc + ((products.find(p => p.id === i.id)?.costPrice || 0) * i.quantity), 0);
+                              {(stats.filteredSales || []).map(s => {
+                                const cost = (s.items || []).reduce((acc, i) => acc + ((products.find(p => p.id === i.id)?.costPrice || 0) * i.quantity), 0);
                                 return (
                                     <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
                                         <td className="p-8 text-xs font-bold dark:text-white">{new Date(s.timestamp).toLocaleString()}</td>
                                         <td className="p-8 font-mono text-xs text-slate-400">#ORD-{s.id.slice(-6)}</td>
-                                        <td className="p-8 text-right font-black text-slate-900 dark:text-white">{formatCurrency(s.total, language, storeSettings?.currency || 'USD')}</td>
-                                        <td className="p-8 text-right font-black text-emerald-500">+{formatCurrency(s.total - cost, language, storeSettings?.currency || 'USD')}</td>
+                                        <td className="p-8 text-right font-black text-slate-900 dark:text-white">{formatCurrency(s.total || 0, language, storeSettings?.currency || 'USD')}</td>
+                                        <td className="p-8 text-right font-black text-emerald-500">+{formatCurrency((s.total || 0) - cost, language, storeSettings?.currency || 'USD')}</td>
                                     </tr>
                                 );
                               })}

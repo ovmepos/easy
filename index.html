@@ -4,111 +4,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-    <title>AI Identity Scan - Smart Point of Sale & E-commerce Solution</title>
-    <meta name="description" content="AI Identity Scan is a smart, cloud-based Point of Sale and E-commerce solution for small and medium businesses. Manage inventory, sales, and customers with ease." />
-    <meta name="keywords" content="POS, Point of Sale, E-commerce, Inventory Management, Retail, Business Software, AI Identity Scan" />
-    <meta name="author" content="AI Identity Scan Team" />
-    <meta property="og:title" content="AI Identity Scan - Smart Point of Sale" />
-    <meta property="og:description" content="Manage your business efficiently with AI Identity Scan. Cloud-based POS and E-commerce in one place." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://ai-identity-scan.node" />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1633409302455-582aba7965e4?auto=format&fit=crop&q=80&w=1200" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="AI Identity Scan - Smart Point of Sale" />
-    <meta name="twitter:description" content="Manage your business efficiently with AI Identity Scan." />
-    <meta name="twitter:image" content="https://images.unsplash.com/photo-1633409302455-582aba7965e4?auto=format&fit=crop&q=80&w=1200" />
-    <!-- Add Cairo font for Arabic support -->
+    <title>GiftCard Hub - Premium Gift Cards</title>
+    <meta name="description" content="GiftCard Hub is a premium platform for managing and purchasing gift cards from your favorite brands." />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.gstatic.com/css2?family=Cairo:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Cairo', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
-            },
-            colors: {
-              brand: {
-                50: '#f0f9ff',
-                100: '#e0f2fe',
-                500: '#0ea5e9',
-                600: '#0284c7',
-                700: '#0369a1',
-                900: '#0c4a6e',
-              },
-              dark: {
-                bg: '#0f172a', 
-                card: '#1e293b', 
-                text: '#f8fafc', 
-              }
-            }
-          }
-        }
-      }
-    </script>
-    <style>
-      :root { --app-height: 100%; }
-      html, body {
-        height: auto;
-        min-height: 100svh;
-        overflow-x: hidden;
-        overflow-y: auto;
-        touch-action: manipulation;
-      }
-      #root { min-height: 100svh; }
-      ::-webkit-scrollbar { width: 5px; height: 5px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb {
-        background: #334155;
-        border-radius: 10px;
-      }
-      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,0.1);
-        border-radius: 20px;
-      }
-      @media print {
-        .no-print { display: none !important; }
-        .print-only { display: block !important; }
-        body { background: white; height: auto; overflow: visible; }
-      }
-      button { user-select: none; -webkit-tap-highlight-color: transparent; }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    "jspdf": "https://esm.sh/jspdf@^2.5.1",
-    "jspdf-autotable": "https://esm.sh/jspdf-autotable@^3.8.1",
-    "xlsx": "https://esm.sh/xlsx@^0.18.5",
-    "jszip": "https://esm.sh/jszip@^3.10.1",
-    "jsqr": "https://esm.sh/jsqr@1.4.0",
-    "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "qrcode": "https://esm.sh/qrcode@1.5.3",
-    "html5-qrcode": "https://esm.sh/html5-qrcode@^2.3.8",
-    "vite-plugin-pwa": "https://esm.sh/vite-plugin-pwa@^1.2.0",
-    "firebase/app": "https://esm.sh/firebase@10.14.1/app",
-    "firebase/firestore": "https://esm.sh/firebase@10.14.1/firestore",
-    "firebase/auth": "https://esm.sh/firebase@10.14.1/auth",
-    "firebase/storage": "https://esm.sh/firebase@10.14.1/storage",
-    "firebase/messaging": "https://esm.sh/firebase@10.14.1/messaging",
-    "firebase/analytics": "https://esm.sh/firebase@10.14.1/analytics",
-    "firebase/": "https://esm.sh/firebase@^12.8.0/"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
-  <body class="bg-gray-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased transition-colors duration-200">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/index.css">
+  </head>
+  <body class="antialiased">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

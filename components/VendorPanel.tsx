@@ -3,7 +3,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { Product, Sale, User, Language, VendorSettings, StoreSettings, Category, GiftCard, Brand } from '../types';
 import { CURRENCY } from '../constants';
 import { formatCurrency, formatNumber } from '../utils/format';
-import { Package, TrendingUp, DollarSign, Search, Plus, List, ChevronLeft, ArrowUpRight, ShoppingBag, Layers, Users, ShieldCheck, Trash2, Edit2, X, Save, Key, Mail, Store, Cloud, Calendar, RefreshCw, Loader2, Zap, UserCheck, ShieldAlert, MapPin, Type, Copy, Tag, CreditCard, Award, Image as ImageIcon } from 'lucide-react';
+import { Package, TrendingUp, DollarSign, Search, Plus, List, ChevronLeft, ArrowUpRight, ShoppingBag, Layers, Users, ShieldCheck, Trash2, Edit2, X, Save, Key, Mail, Store, Cloud, Calendar, RefreshCw, Loader2, Zap, UserCheck, ShieldAlert, MapPin, Type, Copy, Tag, CreditCard, Award, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { Inventory } from './Inventory';
 
 interface VendorPanelProps {
@@ -18,7 +18,7 @@ interface VendorPanelProps {
   onUpdateProduct: (p: Product) => void;
   onDeleteProduct: (id: string) => void;
   onBulkUpdateProduct: (products: Product[]) => void;
-  onAddUser: (u: User) => void;
+  onAddUser: (u: Omit<User, 'id'>) => void;
   onUpdateUser: (u: User) => void;
   onDeleteUser: (id: string) => void;
   onAddCategory: (c: Omit<Category, 'id'>) => void;
@@ -33,6 +33,7 @@ interface VendorPanelProps {
   language: Language;
   t: (key: string) => string;
   storeSettings: StoreSettings;
+  premiumPlans: any[];
   onGoBack?: () => void;
 }
 
@@ -43,9 +44,9 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
   onAddCategory, onUpdateCategory, onDeleteCategory,
   onAddGiftCard, onUpdateGiftCard, onDeleteGiftCard,
   onAddBrand, onUpdateBrand, onDeleteBrand,
-  language, t, storeSettings, onGoBack
+  language, t, storeSettings, premiumPlans, onGoBack
 }) => {
-  const [activeSubView, setActiveSubView] = useState<'DASHBOARD' | 'INVENTORY' | 'TEAM' | 'STORE' | 'CATALOG'>('DASHBOARD');
+  const [activeSubView, setActiveSubView] = useState<'DASHBOARD' | 'INVENTORY' | 'TEAM' | 'STORE' | 'CATALOG' | 'SUBSCRIPTION'>('DASHBOARD');
   const [activeCatalogTab, setActiveCatalogTab] = useState<'CATEGORIES' | 'GIFT_CARDS' | 'BRANDS'>('CATEGORIES');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -113,8 +114,7 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
     const finalUsername = isNew ? generateStaffUsername() : staffFormData.username!;
     const finalPassword = isNew ? generateStaffPassword() : staffFormData.password!;
 
-    const staffData: User = {
-        id: editingId || `stf_${Date.now()}`,
+    const staffData: Omit<User, 'id'> = {
         name: staffFormData.name!.trim(),
         username: finalUsername,
         password: finalPassword,
@@ -124,10 +124,11 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
     };
 
     if (editingId) {
-        onUpdateUser(staffData);
+        onUpdateUser({ ...staffData, id: editingId } as User);
     } else {
         onAddUser(staffData);
-        setLastProvisionedStaff(staffData); // Trigger Credential Card view
+        // For the credential card, we just need the data we just created
+        setLastProvisionedStaff({ ...staffData, id: 'temp' } as User); 
     }
     
     setIsModalOpen(false);
@@ -212,6 +213,7 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
             <button onClick={() => setActiveSubView('CATALOG')} className={`px-4 py-2.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubView === 'CATALOG' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-sm' : 'text-slate-500'}`}>Catalog</button>
             <button onClick={() => setActiveSubView('TEAM')} className={`px-4 py-2.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubView === 'TEAM' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-sm' : 'text-slate-500'}`}>Team</button>
             <button onClick={() => setActiveSubView('STORE')} className={`px-4 py-2.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubView === 'STORE' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-sm' : 'text-slate-500'}`}>Node</button>
+            <button onClick={() => setActiveSubView('SUBSCRIPTION')} className={`px-4 py-2.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubView === 'SUBSCRIPTION' ? 'bg-white dark:bg-slate-700 text-brand-600 shadow-sm' : 'text-slate-500'}`}>Premium</button>
         </div>
         <button onClick={() => setActiveSubView('INVENTORY')} className="px-6 py-3.5 bg-brand-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg active:scale-95 flex items-center justify-center gap-2 italic"><Package size={16} /> {t('inventory')}</button>
       </div>
@@ -486,6 +488,64 @@ export const VendorPanel: React.FC<VendorPanelProps> = ({
                   </button>
               </div>
           </div>
+      ) : activeSubView === 'SUBSCRIPTION' ? (
+        <div className="animate-fade-in max-w-5xl mx-auto space-y-8 pb-20">
+            <div className="bg-gradient-to-br from-slate-900 to-brand-950 text-white p-10 rounded-[3.5rem] shadow-2xl relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-8 border-2 border-brand-500/30">
+                <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12"><Sparkles size={160} className="text-brand-400" /></div>
+                <div className="relative z-10 text-center md:text-left">
+                    <h3 className="text-3xl md:text-4xl font-black uppercase italic tracking-tighter mb-2 flex items-center gap-3 justify-center md:justify-start">
+                      easyPOS <span className="text-brand-400">PREMIUM</span>
+                    </h3>
+                    <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px]">Upgrade your node with AI-Powered features</p>
+                </div>
+                <div className="relative z-10 bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10">
+                    <div className="text-[8px] font-black uppercase tracking-widest text-brand-400 mb-1">Current Plan</div>
+                    <div className="text-xl font-black uppercase italic tracking-tighter">Standard Node</div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {premiumPlans.map((plan: any) => (
+                <div key={plan.id} className={`bg-white dark:bg-slate-900 rounded-[3rem] border-2 p-8 shadow-xl transition-all hover:scale-[1.02] relative flex flex-col ${plan.isPopular ? 'border-brand-500' : 'border-slate-100 dark:border-slate-800'}`}>
+                  {plan.isPopular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-600 text-white px-6 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">Most Popular</div>
+                  )}
+                  
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-800 p-2 flex items-center justify-center overflow-hidden border border-slate-100 dark:border-slate-700">
+                      {plan.avatarUrl ? (
+                        <img src={plan.avatarUrl} alt="AI Avatar" className="w-full h-full object-cover rounded-xl" />
+                      ) : (
+                        <Sparkles size={32} className="text-brand-500" />
+                      )}
+                    </div>
+                    <div className="bg-brand-50 dark:bg-brand-900/20 p-2 rounded-xl">
+                        <Zap size={16} className="text-brand-600" />
+                    </div>
+                  </div>
+
+                  <h4 className="text-2xl font-black uppercase italic tracking-tighter dark:text-white mb-2">{plan.name}</h4>
+                  <div className="flex items-baseline gap-1 mb-8">
+                    <span className="text-4xl font-black text-brand-600 tracking-tighter">{formatCurrency(plan.price, language, storeSettings.currency)}</span>
+                    <span className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">/ {plan.duration}</span>
+                  </div>
+
+                  <div className="space-y-4 flex-1 mb-8">
+                    {plan.features.map((feature: string, i: number) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Award size={16} className="text-brand-500 shrink-0" />
+                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button className="w-full py-4 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 italic">
+                    Upgrade Now
+                  </button>
+                </div>
+              ))}
+            </div>
+        </div>
       ) : null}
 
       {isModalOpen && (

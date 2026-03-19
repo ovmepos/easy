@@ -1,132 +1,122 @@
-// ===============================================================
-// Assumed Data Model
-// ===============================================================
-//
-// Collection: profiles
-// Document ID: Firebase Auth UID
-// Fields:
-//   - id: string (required)
-//   - name: string (required)
-//   - role: string (required) - ['ADMIN', 'MANAGER', 'STAFF', 'CASHIER', 'CUSTOMER', 'VENDOR', 'VENDOR_STAFF']
-//   - email: string (optional)
-//
-// Collection: products
-// Document ID: auto-generated
-// Fields:
-//   - id: string (required)
-//   - name: string (required)
-//   - sku: string (required)
-//   - sellPrice: number (required)
-//   - stock: number (required)
-//   - category: string (required)
-//
-// Collection: sales
-// Document ID: auto-generated
-// Fields:
-//   - id: string (required)
-//   - timestamp: number (required)
-//   - total: number (required)
-//   - items: list (required)
-//
-// ===============================================================
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Fields: email, displayName, role, subscriptionStatus, createdAt
+    //
+    // Collection: appConfig
+    // Fields: appName, logoUrl, footerLogoUrl, footerName, createdAt
+    //
+    // Collection: giftCards
+    // Fields: name, brandId, categoryId, imageUrl, price, description, createdAt
+    //
+    // Collection: categories
+    // Fields: name, imageUrl, createdAt
+    //
+    // Collection: brands
+    // Fields: name, imageUrl, createdAt
+    //
+    // Collection: subscriptionPlans
+    // Fields: name, price, features, createdAt
+    //
+    // ===============================================================
+
+    // ===============================================================
     // Helper Functions
+    // ===============================================================
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isAdmin() {
-      return isAuthenticated() && 
-        (get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'ADMIN' ||
-         (request.auth.token.email in ["ovmepos@gmail.com", "nabeelkhan1007@gmail.com", "zahratalsawsen1@gmail.com"] && request.auth.token.email_verified == true));
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "ovmepos@gmail.com" && request.auth.token.email_verified == true));
     }
-    
+
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function isValidProduct(data) {
-      return data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
-             data.sku is string && data.sku.size() > 0 &&
-             data.sellPrice is number && data.sellPrice >= 0 &&
-             data.stock is number;
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'role', 'subscriptionStatus']) &&
+             data.email is string &&
+             data.role in ['admin', 'user'] &&
+             data.subscriptionStatus in ['free', 'premium'];
     }
 
-    function isValidSale(data) {
-      return data.total is number && data.total >= 0 &&
-             data.items is list &&
-             data.timestamp is number;
+    function isValidAppConfig(data) {
+      return data.keys().hasAll(['appName', 'logoUrl']) &&
+             data.appName is string && data.appName.size() > 0 &&
+             data.logoUrl is string;
     }
 
-    function isValidProfile(data) {
-      return data.name is string && data.name.size() > 0 &&
-             data.role in ['ADMIN', 'MANAGER', 'STAFF', 'CASHIER', 'CUSTOMER', 'VENDOR', 'VENDOR_STAFF'];
-    }
-
-    function isValidBooking(data) {
-      return data.customerName is string && data.customerName.size() > 0 &&
-             data.customerMobile is string && data.customerMobile.size() > 0 &&
-             data.bookingDate is string &&
-             data.status in ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'];
-    }
-
-    function isValidStockHistory(data) {
-      return data.productId is string &&
-             data.oldStock is number &&
-             data.newStock is number &&
-             data.timestamp is number;
+    function isValidGiftCard(data) {
+      return data.keys().hasAll(['name', 'brandId', 'categoryId', 'imageUrl', 'price']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.price is number && data.price >= 0;
     }
 
     function isValidCategory(data) {
-      return data.name is string && data.name.size() > 0;
+      return data.keys().hasAll(['name', 'imageUrl']) &&
+             data.name is string && data.name.size() > 0;
     }
 
-    match /profiles/{userId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidProfile(request.resource.data) && (isOwner(userId) || isAdmin());
-      allow update: if isAuthenticated() && isValidProfile(request.resource.data) && (isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role));
+    function isValidBrand(data) {
+      return data.keys().hasAll(['name', 'imageUrl']) &&
+             data.name is string && data.name.size() > 0;
+    }
+
+    function isValidSubscriptionPlan(data) {
+      return data.keys().hasAll(['name', 'price', 'features']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.price is number && data.price >= 0 &&
+             data.features is list;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'user';
+      allow update: if isAdmin() || (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role);
       allow delete: if isAdmin();
     }
 
-    match /products/{productId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidProduct(request.resource.data) && (isAdmin() || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'VENDOR');
-      allow update: if isAuthenticated() && isValidProduct(request.resource.data) && (isAdmin() || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'VENDOR');
-      allow delete: if isAdmin();
+    match /appConfig/{configId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidAppConfig(request.resource.data);
     }
 
-    match /sales/{saleId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidSale(request.resource.data);
-      allow update, delete: if isAdmin();
+    match /giftCards/{cardId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidGiftCard(request.resource.data);
     }
 
-    match /settings/{settingId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
+    match /categories/{catId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidCategory(request.resource.data);
     }
 
-    match /bookings/{bookingId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidBooking(request.resource.data);
-      allow update: if isAuthenticated() && isValidBooking(request.resource.data);
-      allow delete: if isAdmin();
+    match /brands/{brandId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidBrand(request.resource.data);
     }
 
-    match /stock_history/{historyId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidStockHistory(request.resource.data);
-      allow update, delete: if isAdmin();
+    match /subscriptionPlans/{planId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidSubscriptionPlan(request.resource.data);
     }
 
-    match /categories/{categoryId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isAdmin();
-      allow delete: if isAdmin();
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }

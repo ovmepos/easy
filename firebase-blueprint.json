@@ -110,6 +110,46 @@
         "color": { "type": "string" }
       },
       "required": ["name"]
+    },
+    "Brand": {
+      "title": "Brand",
+      "description": "A partner brand",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "logo": { "type": "string" },
+        "vendorId": { "type": "string" }
+      },
+      "required": ["name", "logo"]
+    },
+    "GiftCard": {
+      "title": "GiftCard",
+      "description": "A gift card",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "discount": { "type": "string" },
+        "vendorId": { "type": "string" }
+      },
+      "required": ["name", "icon", "discount"]
+    },
+    "PremiumPlan": {
+      "title": "PremiumPlan",
+      "description": "A premium subscription plan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "duration": { "type": "string" },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "isPopular": { "type": "boolean" },
+        "avatarUrl": { "type": "string" }
+      },
+      "required": ["name", "price", "duration", "features"]
     }
   },
   "firestore": {
@@ -136,6 +176,18 @@
     "/categories/{categoryId}": {
       "schema": "Category",
       "description": "Product categories"
+    },
+    "/brands/{brandId}": {
+      "schema": "Brand",
+      "description": "Partner brands"
+    },
+    "/giftCards/{giftCardId}": {
+      "schema": "GiftCard",
+      "description": "Gift cards"
+    },
+    "/premium_plans/{planId}": {
+      "schema": "PremiumPlan",
+      "description": "Premium subscription plans"
     }
   }
 }

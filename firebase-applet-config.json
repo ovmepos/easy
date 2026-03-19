@@ -1,9 +1,10 @@
 {
-  "apiKey": "AIzaSyAJLc92ZOEcIksLlppgck8EOv4MsehBZo0",
-  "authDomain": "easypos1app.firebaseapp.com",
-  "projectId": "easypos1app",
-  "storageBucket": "easypos1app.firebasestorage.app",
-  "messagingSenderId": "373081939889",
-  "appId": "1:373081939889:web:6ddd66e081ed8229aaa790",
-  "measurementId": "G-ZCDZHPRRNE"
+  "projectId": "gen-lang-client-0914282678",
+  "appId": "1:770566104623:web:0910eb77f88232ea8c88da",
+  "apiKey": "AIzaSyAFULMDpfnVPsnH8wMglrO-UsE1PK9Cll4",
+  "authDomain": "gen-lang-client-0914282678.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-68cb5fa7-063c-4df7-bcef-27dccac221df",
+  "storageBucket": "gen-lang-client-0914282678.firebasestorage.app",
+  "messagingSenderId": "770566104623",
+  "measurementId": ""
 }

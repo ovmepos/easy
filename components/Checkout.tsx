@@ -27,7 +27,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD'>('CARD');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const subtotal = cart.reduce((acc, item) => acc + (item.sellPrice * item.quantity), 0);
+  const subtotal = (cart || []).reduce((acc, item) => acc + (item.sellPrice * item.quantity), 0);
   const tax = storeSettings.taxEnabled ? subtotal * (storeSettings.taxRate / 100) : 0;
   const total = subtotal + tax;
 

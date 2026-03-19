@@ -23,7 +23,7 @@ export const Cart: React.FC<CartProps> = ({
   storeSettings,
   t
 }) => {
-  const subtotal = cart.reduce((acc, item) => acc + (item.sellPrice * item.quantity), 0);
+  const subtotal = (cart || []).reduce((acc, item) => acc + (item.sellPrice * item.quantity), 0);
   const tax = storeSettings.taxEnabled ? subtotal * (storeSettings.taxRate / 100) : 0;
   const total = subtotal + tax;
 
