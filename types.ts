@@ -25,7 +25,13 @@ export enum AppView {
   BOOKINGS = 'BOOKINGS',
   VENDOR_PANEL = 'VENDOR_PANEL',
   VENDOR_REQUESTS = 'VENDOR_REQUESTS',
-  ROLE_OVERVIEW = 'ROLE_OVERVIEW'
+  ROLE_OVERVIEW = 'ROLE_OVERVIEW',
+  LEGAL_PAGE = 'LEGAL_PAGE',
+  FAVOURITE_BRANDS = 'FAVOURITE_BRANDS',
+  ALL_CATEGORIES = 'ALL_CATEGORIES',
+  GIFT_CARDS = 'GIFT_CARDS',
+  CART = 'CART',
+  CHECKOUT = 'CHECKOUT'
 }
 
 export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CASHIER' | 'CUSTOMER' | 'VENDOR' | 'VENDOR_STAFF';
@@ -223,6 +229,14 @@ export interface Banner {
   image: string;
 }
 
+export interface LegalPage {
+  id: string;
+  title: string;
+  content: string;
+  slug: string;
+  category: 'LEGAL' | 'COMPANY' | 'SUPPORT';
+}
+
 export interface StoreSettings {
   name: string;
   address: string;
@@ -251,4 +265,5 @@ export interface StoreSettings {
   playStoreUrl?: string;
   appStoreUrl?: string;
   homeLayout?: 'default' | 'grid' | 'compact';
+  legalPages?: LegalPage[];
 }

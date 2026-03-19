@@ -3,6 +3,8 @@ import { Product, User } from './types';
 
 export const CURRENCY = '$';
 
+export const BRAND_LOGO = 'https://images.unsplash.com/photo-1633409302455-582aba7965e4?auto=format&fit=crop&q=80&w=200';
+
 export const SUPPORTED_CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
   { code: 'SAR', symbol: 'SR', name: 'Saudi Riyal' },

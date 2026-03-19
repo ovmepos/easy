@@ -13,8 +13,8 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 // 5MB
       },
       manifest: {
-        name: 'easyPOS',
-        short_name: 'easyPOS',
+        name: 'AI Identity Scan',
+        short_name: 'AI Identity Scan',
         description: 'Offline-capable Point of Sale System',
         theme_color: '#0ea5e9',
         icons: [

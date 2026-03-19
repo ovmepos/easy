@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, ShoppingCart, MessageCircle, Wallet, Compass, Home as HomeIcon, ChevronLeft, ChevronRight, Globe, User as UserIcon, LogOut, ShieldCheck, Truck, Headphones, Zap, Camera, Scan, X, Loader2, Database, Shield, Tag, Instagram, Facebook, Twitter, Youtube, Linkedin } from 'lucide-react';
 import { Language, User, StoreSettings, Product, AppView, Category, GiftCard, Brand } from '../types';
+import { BRAND_LOGO } from '../constants';
 import { formatCurrency } from '../utils/format';
 import { GoogleGenAI } from "@google/genai";
 import { Html5QrcodeScanner } from 'html5-qrcode';
@@ -13,7 +14,7 @@ interface HomeProps {
   onLogout: () => void;
   onLoginRequest: () => void;
   storeSettings: StoreSettings;
-  onNavigate: (view: AppView) => void;
+  onNavigate: (view: AppView, extraData?: any) => void;
   products: Product[];
   categories: Category[];
   giftCards: GiftCard[];
@@ -207,16 +208,8 @@ export const Home: React.FC<HomeProps> = ({
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate(AppView.HOME)}>
-              {storeSettings.logo ? (
-                <img src={storeSettings.logo} alt={storeSettings.name} className="h-8 w-auto object-contain" />
-              ) : (
-                <>
-                  <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
-                    <div className="w-4 h-4 bg-white rounded-sm rotate-45"></div>
-                  </div>
-                  <span className="text-xl font-bold tracking-tighter">{storeSettings.name || 'easyPOS'}</span>
-                </>
-              )}
+              <img src={BRAND_LOGO} alt="AI Identity Scan" className="h-8 w-8 rounded-lg object-cover" />
+              <span className="text-xl font-bold tracking-tighter uppercase">AI Identity Scan</span>
             </div>
 
             <nav className={`hidden xl:flex items-center gap-6 text-xs font-bold ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
@@ -413,11 +406,15 @@ export const Home: React.FC<HomeProps> = ({
         <section>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold uppercase tracking-widest">{t('allCategories')}</h3>
-            <button onClick={() => onNavigate(AppView.CUSTOMER_PORTAL)} className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
+            <button onClick={() => onNavigate(AppView.ALL_CATEGORIES)} className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
             {displayCategories.map((cat) => (
-              <div key={cat.id} className={`${cat.color || 'bg-slate-100 dark:bg-slate-800'} border border-white/5 rounded-2xl p-4 hover:border-brand-500/50 transition-all cursor-pointer group text-center`}>
+              <div 
+                key={cat.id} 
+                onClick={() => onNavigate(AppView.CUSTOMER_PORTAL, { categoryName: cat.name })}
+                className={`${cat.color || 'bg-slate-100 dark:bg-slate-800'} border border-white/5 rounded-2xl p-4 hover:border-brand-500/50 transition-all cursor-pointer group text-center`}
+              >
                 <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">{cat.icon || <Tag size={16}/>}</div>
                 <p className="font-bold text-[10px] uppercase tracking-widest truncate">{cat.name}</p>
               </div>
@@ -429,11 +426,11 @@ export const Home: React.FC<HomeProps> = ({
         <section>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold uppercase tracking-widest">{t('favouriteBrands')}</h3>
-            <button className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
+            <button onClick={() => onNavigate(AppView.FAVOURITE_BRANDS)} className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
           </div>
           <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
             {displayBrands.map((brand, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-3 min-w-[100px] group cursor-pointer">
+              <div key={idx} onClick={() => onNavigate(AppView.CUSTOMER_PORTAL, { brandName: brand.name })} className="flex flex-col items-center gap-3 min-w-[100px] group cursor-pointer">
                 <div className="w-20 h-20 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-full p-4 group-hover:border-brand-500/50 transition-all relative shadow-sm">
                   <img src={brand.icon} alt={brand.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform" />
                   <div className="absolute -top-1 -right-1 bg-brand-500 text-[8px] font-black px-1.5 py-0.5 rounded-full text-white">
@@ -450,11 +447,11 @@ export const Home: React.FC<HomeProps> = ({
         <section>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold uppercase tracking-widest">{t('giftCards')}</h3>
-            <button className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
+            <button onClick={() => onNavigate(AppView.GIFT_CARDS)} className="text-brand-500 text-[10px] font-bold uppercase tracking-widest hover:underline">{t('viewAll')}</button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {displayGiftCards.map((gc) => (
-              <div key={gc.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl p-5 hover:border-brand-500/50 transition-all cursor-pointer group text-center shadow-sm">
+              <div key={gc.id} onClick={() => onNavigate(AppView.CUSTOMER_PORTAL)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl p-5 hover:border-brand-500/50 transition-all cursor-pointer group text-center shadow-sm">
                 <div className="w-12 h-12 mx-auto mb-3 group-hover:scale-110 transition-transform flex items-center justify-center">
                     {gc.icon.startsWith('http') ? (
                         <img src={gc.icon} alt={gc.name} className="w-full h-full object-contain" />
@@ -656,20 +653,46 @@ export const Home: React.FC<HomeProps> = ({
           <div className="space-y-6">
             <h4 className="font-black text-xs uppercase tracking-widest text-brand-500">{t('legal')}</h4>
             <ul className="text-[10px] font-bold text-zinc-500 space-y-4 uppercase tracking-widest">
-              <li onClick={() => setShowPolicy(t('privacyPolicy'))} className="hover:text-white cursor-pointer transition-colors">{t('privacyPolicy')}</li>
-              <li onClick={() => setShowPolicy(t('termsConditions'))} className="hover:text-white cursor-pointer transition-colors">{t('termsConditions')}</li>
-              <li onClick={() => setShowPolicy(t('refundPolicy'))} className="hover:text-white cursor-pointer transition-colors">{t('refundPolicy')}</li>
-              <li className="hover:text-white cursor-pointer transition-colors">{t('shippingPolicy')}</li>
+              {storeSettings.legalPages?.filter(p => p.category === 'LEGAL').map(page => (
+                <li key={page.id} onClick={() => onNavigate(AppView.LEGAL_PAGE, page)} className="hover:text-white cursor-pointer transition-colors">{page.title}</li>
+              ))}
+              {!storeSettings.legalPages?.some(p => p.category === 'LEGAL') && (
+                <>
+                  <li onClick={() => setShowPolicy(t('privacyPolicy'))} className="hover:text-white cursor-pointer transition-colors">{t('privacyPolicy')}</li>
+                  <li onClick={() => setShowPolicy(t('termsConditions'))} className="hover:text-white cursor-pointer transition-colors">{t('termsConditions')}</li>
+                  <li onClick={() => setShowPolicy(t('refundPolicy'))} className="hover:text-white cursor-pointer transition-colors">{t('refundPolicy')}</li>
+                </>
+              )}
             </ul>
           </div>
 
           <div className="space-y-6">
             <h4 className="font-black text-xs uppercase tracking-widest text-brand-500">{t('company')}</h4>
             <ul className="text-[10px] font-bold text-zinc-500 space-y-4 uppercase tracking-widest">
-              <li onClick={() => setShowPolicy(t('aboutUs'))} className="hover:text-white cursor-pointer transition-colors">{t('aboutUs')}</li>
-              <li onClick={() => setShowPolicy(t('contactUs'))} className="hover:text-white cursor-pointer transition-colors">{t('contactUs')}</li>
-              <li className="hover:text-white cursor-pointer transition-colors">{t('services')}</li>
-              <li className="hover:text-white cursor-pointer transition-colors">{t('support')}</li>
+              {storeSettings.legalPages?.filter(p => p.category === 'COMPANY').map(page => (
+                <li key={page.id} onClick={() => onNavigate(AppView.LEGAL_PAGE, page)} className="hover:text-white cursor-pointer transition-colors">{page.title}</li>
+              ))}
+              {!storeSettings.legalPages?.some(p => p.category === 'COMPANY') && (
+                <>
+                  <li onClick={() => setShowPolicy(t('aboutUs'))} className="hover:text-white cursor-pointer transition-colors">{t('aboutUs')}</li>
+                  <li onClick={() => setShowPolicy(t('contactUs'))} className="hover:text-white cursor-pointer transition-colors">{t('contactUs')}</li>
+                </>
+              )}
+            </ul>
+          </div>
+
+          <div className="space-y-6">
+            <h4 className="font-black text-xs uppercase tracking-widest text-brand-500">{t('support')}</h4>
+            <ul className="text-[10px] font-bold text-zinc-500 space-y-4 uppercase tracking-widest">
+              {storeSettings.legalPages?.filter(p => p.category === 'SUPPORT').map(page => (
+                <li key={page.id} onClick={() => onNavigate(AppView.LEGAL_PAGE, page)} className="hover:text-white cursor-pointer transition-colors">{page.title}</li>
+              ))}
+              {!storeSettings.legalPages?.some(p => p.category === 'SUPPORT') && (
+                <>
+                  <li className="hover:text-white cursor-pointer transition-colors">{t('services')}</li>
+                  <li className="hover:text-white cursor-pointer transition-colors">{t('support')}</li>
+                </>
+              )}
             </ul>
           </div>
 
@@ -700,8 +723,11 @@ export const Home: React.FC<HomeProps> = ({
         </div>
         
         <div className="max-w-screen-2xl mx-auto pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-            {storeSettings.copyrightText || `© ${new Date().getFullYear()} ${storeSettings.name || 'easyPOS'}. All rights reserved.`}
+          <div className="flex flex-col gap-4">
+            <img src={BRAND_LOGO} alt="EasyPos" className="h-10 w-10 rounded-xl object-cover" />
+            <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              {storeSettings.copyrightText || `© 2026 EASYPOS. ALL RIGHTS RESERVED. POWERED BY EASYPOS NODE NETWORK`}
+            </div>
           </div>
           <div className="flex items-center gap-4 bg-zinc-900 border border-white/5 rounded-xl px-4 py-2.5 w-full md:w-auto">
             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{t('suggestSubscription')}</span>

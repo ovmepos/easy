@@ -20,7 +20,13 @@ import { ShopAccess } from './components/ShopAccess';
 import { CustomerDashboard } from './components/CustomerDashboard';
 import { RoleOverview } from './components/RoleOverview';
 import { ScrollRoll } from './components/ScrollRoll';
-import { AppView, Product, Sale, User, StoreSettings, Language, CartItem, Booking, Category, GiftCard, Brand } from './types';
+import { LegalPageView } from './components/LegalPageView';
+import { BrandsPage } from './components/BrandsPage';
+import { GiftCardsPage } from './components/GiftCardsPage';
+import { CategoriesPageView } from './components/CategoriesPageView';
+import { Cart } from './components/Cart';
+import { Checkout } from './components/Checkout';
+import { AppView, Product, Sale, User, StoreSettings, Language, CartItem, Booking, Category, GiftCard, Brand, LegalPage } from './types';
 import { translations } from './translations';
 import { Loader2, Menu, Globe, ChevronLeft, LogOut } from 'lucide-react';
 import { db, auth } from './firebase';
@@ -32,6 +38,9 @@ const App: React.FC = () => {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [currentView, setCurrentView] = useState<AppView>(AppView.POS);
   const [navigationHistory, setNavigationHistory] = useState<AppView[]>([]);
+  const [selectedLegalPage, setSelectedLegalPage] = useState<LegalPage | null>(null);
+  const [initialCategory, setInitialCategory] = useState<string | undefined>(undefined);
+  const [initialBrand, setInitialBrand] = useState<string | undefined>(undefined);
   
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -47,6 +56,7 @@ const App: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [shopCode, setShopCode] = useState<string | null>(null);
   const [isShopVerified, setIsShopVerified] = useState(false);
+  const [customerCart, setCustomerCart] = useState<CartItem[]>([]);
 
   // Apply theme and language direction
   useEffect(() => {
@@ -299,13 +309,13 @@ const App: React.FC = () => {
 
 
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
-    name: 'easyPOS',
+    name: 'AI Identity Scan',
     address: 'Main Street, City',
     phone: '+1 234 567 890',
-    email: 'support@easypos.io',
+    email: 'support@ai-identity-scan.io',
     currency: 'USD',
     taxRate: 0,
-    logo: 'https://picsum.photos/seed/pos/200/200',
+    logo: 'https://images.unsplash.com/photo-1633409302455-582aba7965e4?auto=format&fit=crop&q=80&w=200',
     receiptFooter: 'Thank you for your business!',
     barcodePrefix: 'EP',
     lowStockThreshold: 10
@@ -320,8 +330,15 @@ const App: React.FC = () => {
     }
   };
 
-  const navigateTo = useCallback((view: AppView) => {
+  const navigateTo = useCallback((view: AppView, extraData?: any) => {
     setNavigationHistory(prev => [...prev, currentView]);
+    if (view === AppView.LEGAL_PAGE && extraData) {
+      setSelectedLegalPage(extraData);
+    }
+    if (view === AppView.CUSTOMER_PORTAL) {
+      setInitialCategory(extraData?.categoryId || extraData?.categoryName);
+      setInitialBrand(extraData?.brandId || extraData?.brandName);
+    }
     setCurrentView(view);
   }, [currentView]);
 
@@ -405,6 +422,28 @@ const App: React.FC = () => {
     setShopCode(code);
     setIsShopVerified(true);
     setCurrentView(AppView.CUSTOMER_PORTAL);
+  };
+
+  const addToCustomerCart = (product: Product) => {
+    setCustomerCart(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  };
+
+  const removeFromCustomerCart = (productId: string) => {
+    setCustomerCart(prev => prev.filter(item => item.id !== productId));
+  };
+
+  const updateCustomerCartQuantity = (productId: string, quantity: number) => {
+    setCustomerCart(prev => prev.map(item => item.id === productId ? { ...item, quantity } : item));
+  };
+
+  const clearCustomerCart = () => {
+    setCustomerCart([]);
   };
 
   const seedDemoProducts = async () => {
@@ -508,7 +547,13 @@ const App: React.FC = () => {
             />}
             {currentView === AppView.SHOP_ACCESS && <ShopAccess language={language} t={t} onVerify={handleShopVerify} initialCode={shopCode || ''} />}
             {currentView === AppView.CUSTOMER_DASHBOARD && user && <CustomerDashboard currentUser={user} language={language} t={t} sales={sales} storeSettings={storeSettings} onGoBack={handleGoBack} />}
-            {currentView === AppView.CUSTOMER_PORTAL && <CustomerPortal products={products} language={language} t={t} currentUser={user} onLoginRequest={() => navigateTo(AppView.LOGIN)} onLogout={handleLogout} onUpdateAvatar={() => {}} storeSettings={storeSettings} toggleLanguage={toggleLanguage} toggleTheme={toggleTheme} isDarkMode={isDarkMode} onUpdateStoreSettings={handleUpdateStoreSettings} onNavigate={navigateTo} />}
+            {currentView === AppView.CUSTOMER_PORTAL && <CustomerPortal products={products} language={language} t={t} currentUser={user} onLoginRequest={() => navigateTo(AppView.LOGIN)} onLogout={handleLogout} onUpdateAvatar={() => {}} storeSettings={storeSettings} toggleLanguage={toggleLanguage} toggleTheme={toggleTheme} isDarkMode={isDarkMode} onUpdateStoreSettings={handleUpdateStoreSettings} onNavigate={navigateTo} initialCategory={initialCategory} initialBrand={initialBrand} cart={customerCart} onAddToCart={addToCustomerCart} />}
+            {currentView === AppView.CART && <Cart cart={customerCart} onUpdateQuantity={updateCustomerCartQuantity} onRemove={removeFromCustomerCart} onNavigate={navigateTo} language={language} storeSettings={storeSettings} t={t} />}
+            {currentView === AppView.CHECKOUT && <Checkout cart={customerCart} onCheckout={async (items, total, paymentMethod, subTotal, discount, tax, discountType, customerName, customerPhone) => {
+              await handleCheckout(items, total, paymentMethod, subTotal, discount, tax, discountType, customerName, customerPhone);
+              clearCustomerCart();
+              navigateTo(AppView.CUSTOMER_DASHBOARD);
+            }} onNavigate={navigateTo} language={language} storeSettings={storeSettings} t={t} />}
             {currentView === AppView.VENDOR_PANEL && <VendorPanel 
               products={products} 
               sales={sales} 
@@ -574,6 +619,44 @@ const App: React.FC = () => {
               t={t} 
             />}
             {currentView === AppView.ROLE_OVERVIEW && <RoleOverview language={language} t={t} onGoBack={handleGoBack} />}
+            {currentView === AppView.LEGAL_PAGE && selectedLegalPage && (
+              <LegalPageView 
+                page={selectedLegalPage} 
+                language={language} 
+                onBack={handleGoBack} 
+                isDarkMode={isDarkMode} 
+              />
+            )}
+            {currentView === AppView.FAVOURITE_BRANDS && (
+              <BrandsPage 
+                brands={brands} 
+                language={language} 
+                onBack={handleGoBack} 
+                isDarkMode={isDarkMode} 
+                storeSettings={storeSettings}
+                onBrandClick={(brand) => navigateTo(AppView.CUSTOMER_PORTAL, { brandName: brand.name })}
+              />
+            )}
+            {currentView === AppView.GIFT_CARDS && (
+              <GiftCardsPage 
+                giftCards={giftCards} 
+                language={language} 
+                onBack={handleGoBack} 
+                isDarkMode={isDarkMode} 
+                storeSettings={storeSettings}
+                onGiftCardClick={(gc) => navigateTo(AppView.CUSTOMER_PORTAL, { categoryName: 'Gift Cards' })}
+              />
+            )}
+            {currentView === AppView.ALL_CATEGORIES && (
+              <CategoriesPageView 
+                categories={categories} 
+                language={language} 
+                onBack={handleGoBack} 
+                isDarkMode={isDarkMode} 
+                storeSettings={storeSettings}
+                onCategoryClick={(cat) => navigateTo(AppView.CUSTOMER_PORTAL, { categoryName: cat.name })}
+              />
+            )}
         </div>
         {user && !user.role.includes('CUSTOMER') && <ClawdBot products={products} sales={sales} storeSettings={storeSettings} currentUser={user!} language={language} t={t} />}
         <ScrollRoll />

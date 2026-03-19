@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { User, StoreSettings, Language, VendorRequest, Product, Sale, UserRole, PaymentGatewaySettings, PrinterSettings } from '../types';
-import { Save, UserPlus, Trash2, Edit2, X, ShieldCheck, Database, HardDrive, User as UserIcon, ChevronLeft, CheckCircle2, AlertCircle, RefreshCw, Upload, Image as ImageIcon, Store, Key, CreditCard, Printer, Bluetooth, Smartphone, Banknote, Globe, Instagram, Facebook, Twitter, Youtube, Linkedin, Plus, Layout } from 'lucide-react';
+import { Save, UserPlus, Trash2, Edit2, X, ShieldCheck, Database, HardDrive, User as UserIcon, ChevronLeft, CheckCircle2, AlertCircle, RefreshCw, Upload, Image as ImageIcon, Store, Key, CreditCard, Printer, Bluetooth, Smartphone, Banknote, Globe, Instagram, Facebook, Twitter, Youtube, Linkedin, Plus, Layout, FileText } from 'lucide-react';
 
 interface SettingsProps {
   users: User[];
@@ -399,6 +399,101 @@ export const Settings: React.FC<SettingsProps> = ({
                             ))}
                             {(storeSettings.customLinks || []).length === 0 && (
                                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-center py-4 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl italic">No custom links added yet.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-50 dark:border-slate-800 space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                                <FileText size={20} className="text-brand-500" />
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('legalPages')}</h3>
+                            </div>
+                            <button 
+                                onClick={() => onUpdateStoreSettings({
+                                    ...storeSettings, 
+                                    legalPages: [...(storeSettings.legalPages || []), { id: Date.now().toString(), title: '', content: '', slug: '', category: 'LEGAL' }]
+                                })}
+                                className="p-2 bg-brand-50 dark:bg-brand-950/20 text-brand-600 rounded-lg hover:scale-110 transition-transform"
+                            >
+                                <Plus size={16} />
+                            </button>
+                        </div>
+                        <div className="space-y-4">
+                            {(storeSettings.legalPages || []).map((page, index) => (
+                                <div key={page.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl space-y-3 border border-transparent hover:border-brand-500/20 transition-all">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-black text-slate-400 uppercase">{t('pageTitle')}</label>
+                                            <input 
+                                                type="text" 
+                                                value={page.title} 
+                                                onChange={e => {
+                                                    const newPages = [...(storeSettings.legalPages || [])];
+                                                    newPages[index].title = e.target.value;
+                                                    onUpdateStoreSettings({ ...storeSettings, legalPages: newPages });
+                                                }}
+                                                className="w-full p-3 bg-white dark:bg-slate-900 rounded-xl font-bold text-xs dark:text-white outline-none" 
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-black text-slate-400 uppercase">{t('pageSlug')}</label>
+                                            <input 
+                                                type="text" 
+                                                value={page.slug} 
+                                                onChange={e => {
+                                                    const newPages = [...(storeSettings.legalPages || [])];
+                                                    newPages[index].slug = e.target.value;
+                                                    onUpdateStoreSettings({ ...storeSettings, legalPages: newPages });
+                                                }}
+                                                className="w-full p-3 bg-white dark:bg-slate-900 rounded-xl font-bold text-xs dark:text-white outline-none" 
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-black text-slate-400 uppercase">{t('pageCategory')}</label>
+                                            <select 
+                                                value={page.category} 
+                                                onChange={e => {
+                                                    const newPages = [...(storeSettings.legalPages || [])];
+                                                    newPages[index].category = e.target.value as any;
+                                                    onUpdateStoreSettings({ ...storeSettings, legalPages: newPages });
+                                                }}
+                                                className="w-full p-3 bg-white dark:bg-slate-900 rounded-xl font-bold text-xs dark:text-white outline-none"
+                                            >
+                                                <option value="LEGAL">{t('legal')}</option>
+                                                <option value="COMPANY">{t('company')}</option>
+                                                <option value="SUPPORT">{t('support')}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[8px] font-black text-slate-400 uppercase">{t('pageContent')}</label>
+                                        <textarea 
+                                            value={page.content} 
+                                            onChange={e => {
+                                                const newPages = [...(storeSettings.legalPages || [])];
+                                                newPages[index].content = e.target.value;
+                                                onUpdateStoreSettings({ ...storeSettings, legalPages: newPages });
+                                            }}
+                                            rows={4}
+                                            className="w-full p-3 bg-white dark:bg-slate-900 rounded-xl font-bold text-xs dark:text-white outline-none resize-none" 
+                                        />
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <button 
+                                            onClick={() => {
+                                                const newPages = (storeSettings.legalPages || []).filter((_, i) => i !== index);
+                                                onUpdateStoreSettings({ ...storeSettings, legalPages: newPages });
+                                            }}
+                                            className="flex items-center gap-2 text-[10px] font-black uppercase text-red-500 hover:text-red-600 transition-colors"
+                                        >
+                                            <Trash2 size={14} /> {t('delete')}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {(storeSettings.legalPages || []).length === 0 && (
+                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-center py-4 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl italic">No legal/company pages added yet.</p>
                             )}
                         </div>
                     </div>

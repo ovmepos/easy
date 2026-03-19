@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Product, Language, User, StoreSettings, AppView } from '../types';
+import { Product, Language, User, StoreSettings, AppView, CartItem } from '../types';
 import { CURRENCY } from '../constants';
 import { Search, ShoppingBag, User as UserIcon, Sparkles, LogIn, ChevronRight, LayoutGrid, List, Camera, ImageIcon, UserCircle2, Settings2, RefreshCcw, Globe, Wallet, Zap } from 'lucide-react';
 import { formatCurrency, formatNumber } from '../utils/format';
@@ -21,6 +21,10 @@ interface CustomerPortalProps {
   isDarkMode: boolean;
   onUpdateStoreSettings: (settings: StoreSettings) => void;
   onNavigate: (view: AppView) => void;
+  initialCategory?: string;
+  initialBrand?: string;
+  cart: CartItem[];
+  onAddToCart: (product: Product) => void;
 }
 
 export const CustomerPortal: React.FC<CustomerPortalProps> = ({
@@ -36,10 +40,15 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
   toggleTheme,
   isDarkMode,
   onUpdateStoreSettings,
-  onNavigate
+  onNavigate,
+  initialCategory,
+  initialBrand,
+  cart,
+  onAddToCart
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory || 'All');
+  const [selectedBrand, setSelectedBrand] = useState(initialBrand || 'All');
   const [tryOnProduct, setTryOnProduct] = useState<Product | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showAvatarSetup, setShowAvatarSetup] = useState(false);
@@ -50,11 +59,14 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
     return products.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+      const matchesBrand = selectedBrand === 'All' || p.brand === selectedBrand;
+      return matchesSearch && matchesCategory && matchesBrand;
     });
-  }, [products, searchTerm, selectedCategory]);
+  }, [products, searchTerm, selectedCategory, selectedBrand]);
 
-  const needsAvatarSetup = currentUser && !currentUser.customerAvatar && !showAvatarSetup;
+  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+
+  const needsAvatarSetup = storeSettings.aiIdentityScanEnabled && currentUser && !currentUser.customerAvatar && !showAvatarSetup;
 
   const currencies = [
     { code: 'USD', symbol: '$' },
@@ -72,7 +84,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
     onUpdateStoreSettings({ ...storeSettings, currency: currencies[nextIndex].code });
   };
 
-  if (tryOnProduct || needsAvatarSetup || showAvatarSetup) {
+  if (storeSettings.aiIdentityScanEnabled && (tryOnProduct || needsAvatarSetup || showAvatarSetup)) {
     return (
       <VirtualTryOn 
         product={tryOnProduct} 
@@ -99,7 +111,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
               <div className="bg-brand-600 p-2 rounded-xl shadow-lg shadow-brand-600/20">
                 <ShoppingBag className="text-white" size={20} />
               </div>
-              <h1 className="text-lg font-black italic uppercase tracking-tighter dark:text-white">easyPOS <span className="text-brand-600">Shop</span></h1>
+              <h1 className="text-lg font-black italic uppercase tracking-tighter dark:text-white">AI Identity Scan <span className="text-brand-600">Shop</span></h1>
             </div>
 
             <nav className="hidden xl:flex items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -142,9 +154,21 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
               >
                 {isDarkMode ? <Zap size={14} className="text-yellow-400" /> : <Zap size={14} className="text-slate-400" />}
               </button>
+
+              <button 
+                onClick={() => onNavigate(AppView.CART)}
+                className="p-2 rounded-lg bg-brand-600 text-white border border-transparent hover:bg-brand-700 transition-all relative"
+              >
+                <ShoppingBag size={14} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
             </div>
 
-            {currentUser ? (
+            {currentUser && storeSettings.aiIdentityScanEnabled && (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
                     <button 
@@ -163,7 +187,17 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
                     </button>
                 </div>
               </div>
-            ) : (
+            )}
+            {currentUser && !storeSettings.aiIdentityScanEnabled && (
+              <button 
+                onClick={onLogout}
+                className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all active:scale-90 border border-slate-200 dark:border-slate-700"
+                title="Sign Out"
+              >
+                <UserIcon size={18} />
+              </button>
+            )}
+            {!currentUser && (
               <button 
                 onClick={onLoginRequest}
                 className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-brand-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all italic"
@@ -176,7 +210,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
       </header>
 
       {/* Hero Banner (Only for Guests) */}
-      {!currentUser && (
+      {!currentUser && storeSettings.aiIdentityScanEnabled && (
         <div className="bg-brand-600 p-8 md:p-16 text-white text-center relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-brand-700 to-transparent opacity-50"></div>
           <div className="relative z-10 max-w-2xl mx-auto space-y-6">
@@ -194,6 +228,15 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
           </div>
           <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-white/10 rounded-full blur-[100px]"></div>
           <div className="absolute -top-20 -left-20 w-80 h-80 bg-brand-400/20 rounded-full blur-[80px]"></div>
+        </div>
+      )}
+
+      {!currentUser && !storeSettings.aiIdentityScanEnabled && (
+        <div className="bg-slate-900 p-8 md:p-16 text-white text-center relative overflow-hidden">
+          <div className="relative z-10 max-w-2xl mx-auto space-y-4">
+            <h2 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter leading-none">Welcome to Our Store</h2>
+            <p className="text-slate-400 font-medium text-sm md:text-base leading-relaxed">Explore our exclusive collection of premium products.</p>
+          </div>
         </div>
       )}
 
@@ -243,7 +286,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-200"><ImageIcon size={48} /></div>
                   )}
-                  {currentUser && (
+                  {currentUser && storeSettings.aiIdentityScanEnabled && (
                     <button 
                       onClick={(e) => { e.stopPropagation(); setTryOnProduct(p); }}
                       className="absolute bottom-4 left-4 right-4 py-3 bg-white/80 backdrop-blur-xl text-brand-600 rounded-2xl font-black text-[10px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-y-4 group-hover:translate-y-0 flex items-center justify-center gap-2 shadow-xl hover:bg-brand-600 hover:text-white"
@@ -268,9 +311,18 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({
                     <div>
                       <p className="text-2xl font-black text-brand-600 dark:text-brand-400 tracking-tighter">{formatCurrency(p.sellPrice, language, storeSettings?.currency || 'USD')}</p>
                     </div>
-                    {p.stock <= 5 && (
-                      <div className="bg-red-50 dark:bg-red-950/20 px-3 py-1 rounded-full text-[8px] font-black text-red-600 uppercase tracking-widest border border-red-100 dark:border-red-900/30">Limited Stock</div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {p.stock <= 5 && (
+                        <div className="bg-red-50 dark:bg-red-950/20 px-3 py-1 rounded-full text-[8px] font-black text-red-600 uppercase tracking-widest border border-red-100 dark:border-red-900/30">Limited Stock</div>
+                      )}
+                      <button 
+                        onClick={() => onAddToCart(p)}
+                        className="p-3 bg-brand-600 text-white rounded-2xl hover:bg-brand-700 transition-all active:scale-90 shadow-lg shadow-brand-600/20"
+                        title="Add to Cart"
+                      >
+                        <Zap size={14} fill="currentColor" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

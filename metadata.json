@@ -1,6 +1,6 @@
 {
-  "name": "easyPOS",
-  "description": "A comprehensive Point of Sale system with inventory management, barcode scanning support, and AI-powered sales insights.",
+  "name": "AI Identity Scan",
+  "description": "Smart Point of Sale & E-commerce Solution with AI Identity Scan technology.",
   "requestFramePermissions": [
     "camera",
     "microphone",
